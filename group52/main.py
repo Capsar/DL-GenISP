@@ -13,9 +13,9 @@ class GenISP(th.nn.Module):
 
         # 2-step color processing stage realized by image-to-parameter modules: ConvWB and ConvCC
         self.image_to_parameter = th.nn.Sequential(
-            th.nn.Conv2d(3, 16, 7, 1), th.nn.LeakyReLU(), th.nn.MaxPool2d(),
-            th.nn.Conv2d(16, 32, 5, 1), th.nn.LeakyReLU(), th.nn.MaxPool2d(),
-            th.nn.Conv2d(32, 128, 3, 1), th.nn.LeakyReLU(), th.nn.MaxPool2d(),
+            th.nn.Conv2d(3, 16, 7), th.nn.LeakyReLU(), th.nn.MaxPool2d(),
+            th.nn.Conv2d(16, 32, 5), th.nn.LeakyReLU(), th.nn.MaxPool2d(),
+            th.nn.Conv2d(32, 128, 3), th.nn.LeakyReLU(), th.nn.MaxPool2d(),
             th.nn.AdaptiveAvgPool2d(1)
         )
         self.conv_wb = th.nn.Sequential(deepcopy(self.image_to_parameter),
@@ -24,9 +24,9 @@ class GenISP(th.nn.Module):
                                         th.nn.Linear(9, 1))
 
         # A non-linear local image enhancement by a shallow ConvNet
-        self.shallow_conv_net = th.nn.Sequential(th.nn.Conv2d(3, 16, 3, 1), th.nn.InstanceNorm2d(), th.nn.LeakyReLU(),
-                                                 th.nn.Conv2d(16, 64, 3, 1), th.nn.InstanceNorm2d(), th.nn.LeakyReLU(),
-                                                 th.nn.Conv2d(64, 3, 1, 1))
+        self.shallow_conv_net = th.nn.Sequential(th.nn.Conv2d(3, 16, 3), th.nn.InstanceNorm2d(), th.nn.LeakyReLU(),
+                                                 th.nn.Conv2d(16, 64, 3), th.nn.InstanceNorm2d(), th.nn.LeakyReLU(),
+                                                 th.nn.Conv2d(64, 3, 1))
 
 
 def main():
