@@ -1,6 +1,9 @@
 from copy import deepcopy
 
 import torch as th
+import os
+import rawpy
+import numpy as np
 
 from group52.retinanet import model
 
@@ -28,10 +31,32 @@ class GenISP(th.nn.Module):
                                                  th.nn.Conv2d(16, 64, 3), th.nn.InstanceNorm2d(), th.nn.LeakyReLU(),
                                                  th.nn.Conv2d(64, 3, 1))
 
+# https://www.quora.com/What-is-the-RGB-to-XYZ-conversion-matrix-Is-it-possible-to-convert-from-RGB-to-XYZ-using-just-this-matrix-no-other-information-If-not-why-not
+def load_image(path):
+    with rawpy.imread(path) as raw:
+        conversion_matrix = raw.rgb_xyz_matrix
+        raw_img = raw.raw_image
+        h = raw.shape[0]
+        w = raw.shape[1]
+
+        for h_i in range(h):
+            for w_i in range(w):
+                xyz = np.matmul(conversion_matrix, raw[h_i, w_i])
+
+    return raw.postprocess()
+
+
+    
+
 
 def main():
     object_detector = model.resnet50(num_classes=80)
     object_detector.load_state_dict(th.load('../data/coco_resnet_50_map_0_335_state_dict.pt', map_location=th.device('cpu')))
+ 
+    images_paths = os.listdir('../data/sony_raw/')
+
+    for p in images_paths:
+        image = load_image(p)
 
 
 if __name__ == '__main__':
