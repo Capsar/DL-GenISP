@@ -1,3 +1,4 @@
+import math
 from copy import deepcopy
 
 import torch as th
@@ -29,9 +30,35 @@ class GenISP(th.nn.Module):
                                                  th.nn.Conv2d(64, 3, 1))
 
 
+def get_hyper_parameters():
+    return {
+        'epochs': 12,
+        'batch_size': 8,
+
+        # Key states from which epoch the learning rate is enabled,
+        # Value is the learning rate.
+        #
+        # We set the learning rate to 1e−2 initially and
+        # decrease it to 1e−3 and 1e−4 at the 5th and
+        # 10th epoch, respectively.
+        'learning_rates': {
+            0, math.exp(-2),
+            5, math.exp(-3),
+            10, math.exp(-4)
+        },
+        # During training and testing, we
+        # resize the images to a maximum size of 1333 × 800 and
+        # keep the image aspect ratio. In ConvWB and ConvCC, we
+        # resize input to 256 × 256 using bilinear interpolation
+        'resized_image_height': 800,
+
+    }
+
+
 def main():
     object_detector = model.resnet50(num_classes=80)
-    object_detector.load_state_dict(th.load('../data/coco_resnet_50_map_0_335_state_dict.pt', map_location=th.device('cpu')))
+    object_detector.load_state_dict(
+        th.load('../data/coco_resnet_50_map_0_335_state_dict.pt', map_location=th.device('cpu')))
 
 
 if __name__ == '__main__':
