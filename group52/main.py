@@ -31,17 +31,22 @@ class GenISP(th.nn.Module):
                                                  th.nn.Conv2d(16, 64, 3), th.nn.InstanceNorm2d(), th.nn.LeakyReLU(),
                                                  th.nn.Conv2d(64, 3, 1))
 
-# https://www.quora.com/What-is-the-RGB-to-XYZ-conversion-matrix-Is-it-possible-to-convert-from-RGB-to-XYZ-using-just-this-matrix-no-other-information-If-not-why-not
+
 def load_image(path):
+    """
+        Source: https://www.quora.com/What-is-the-RGB-to-XYZ-conversion-matrix-Is-it-possible-to-convert-from-RGB-to-XYZ-using-just-this-matrix-no-other-information-If-not-why-not
+    :param path: path to the raw image.
+    :return: loaded image.
+    """
     with rawpy.imread(path) as raw:
         conversion_matrix = raw.rgb_xyz_matrix
         raw_img = raw.raw_image
         h, w = raw.shape[0], raw.shape[1]
         xyz_img = np.ndarray(raw.shape)
 
-        # average green channels form the packed rerpesentation
+        # average green channels form the packed representation
 
-        #apply CST matrix
+        # apply CST matrix
         for h_i in range(h):
             for w_i in range(w):
                 xyz_img[h_i, w_i] = np.matmul(conversion_matrix, raw_img[h_i, w_i])
@@ -49,15 +54,11 @@ def load_image(path):
     return xyz_img
 
 
-    
-
-
 def main():
     object_detector = model.resnet50(num_classes=80)
     object_detector.load_state_dict(th.load('../data/coco_resnet_50_map_0_335_state_dict.pt', map_location=th.device('cpu')))
- 
-    images_paths = os.listdir('../data/sony_raw/')
 
+    images_paths = os.listdir('../data/our_sony/')
     for p in images_paths:
         image = load_image(p)
 
