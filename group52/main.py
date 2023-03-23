@@ -39,6 +39,9 @@ def load_image(path):
         h, w = raw.shape[0], raw.shape[1]
         xyz_img = np.ndarray(raw.shape)
 
+        # average green channels form the packed rerpesentation
+
+        #apply CST matrix
         for h_i in range(h):
             for w_i in range(w):
                 xyz_img[h_i, w_i] = np.matmul(conversion_matrix, raw_img[h_i, w_i])
