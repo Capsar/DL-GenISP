@@ -36,14 +36,14 @@ def load_image(path):
     with rawpy.imread(path) as raw:
         conversion_matrix = raw.rgb_xyz_matrix
         raw_img = raw.raw_image
-        h = raw.shape[0]
-        w = raw.shape[1]
+        h, w = raw.shape[0], raw.shape[1]
+        xyz_img = np.ndarray(raw.shape)
 
         for h_i in range(h):
             for w_i in range(w):
-                xyz = np.matmul(conversion_matrix, raw[h_i, w_i])
+                xyz_img[h_i, w_i] = np.matmul(conversion_matrix, raw_img[h_i, w_i])
 
-    return raw.postprocess()
+    return xyz_img
 
 
     
