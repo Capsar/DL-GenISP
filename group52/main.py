@@ -5,7 +5,7 @@ import os
 import rawpy
 import numpy as np
 
-from group52.retinanet import model
+# from group52.retinanet import model
 
 
 class GenISP(th.nn.Module):
@@ -34,17 +34,31 @@ class GenISP(th.nn.Module):
 # https://www.quora.com/What-is-the-RGB-to-XYZ-conversion-matrix-Is-it-possible-to-convert-from-RGB-to-XYZ-using-just-this-matrix-no-other-information-If-not-why-not
 def load_image(path):
     with rawpy.imread(path) as raw:
+        
+        raw_image = raw.raw_image
+        h, w = raw_image.shape[0], raw_image.shape[1] 
+        print(raw_image.shape)
+
+        
+
+
+        for i in range(h):
+            for j in range(w):
+                p1 = raw_image[i,j]
+                p2 = raw_image[i+1, j]
+                p3 = raw_image[i, j+1]
+                p4 = raw_image[i+1, j+1]
+
+
+            
         conversion_matrix = raw.rgb_xyz_matrix
-        raw_img = raw.raw_image
-        h, w = raw.shape[0], raw.shape[1]
-        xyz_img = np.ndarray(raw.shape)
+        h, w = raw.raw_image.shape[0], raw.raw_image.shape[1]
 
-        # average green channels form the packed rerpesentation
 
-        #apply CST matrix
-        for h_i in range(h):
-            for w_i in range(w):
-                xyz_img[h_i, w_i] = np.matmul(conversion_matrix, raw_img[h_i, w_i])
+        xyz_img = raw.postprocess(four_color_rgb=True, output_color=rawpy.ColorSpace(XYZ))
+        # pack image
+
+
 
     return xyz_img
 
@@ -53,13 +67,13 @@ def load_image(path):
 
 
 def main():
-    object_detector = model.resnet50(num_classes=80)
-    object_detector.load_state_dict(th.load('../data/coco_resnet_50_map_0_335_state_dict.pt', map_location=th.device('cpu')))
+    # object_detector = model.resnet50(num_classes=80)
+    # object_detector.load_state_dict(th.load('../data/coco_resnet_50_map_0_335_state_dict.pt', map_location=th.device('cpu')))
  
-    images_paths = os.listdir('../data/sony_raw/')
+    # images_paths = os.listdir('../data/sony_raw/')
 
-    for p in images_paths:
-        image = load_image(p)
+    im = load_image('/Users/taichi/Downloads/our_nikon_and_sony/our_sony/DSC01088.ARW')
+    print(load_image)
 
 
 if __name__ == '__main__':
