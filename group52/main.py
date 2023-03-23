@@ -8,6 +8,7 @@ import numpy as np
 # from group52.retinanet import model
 from matplotlib import pyplot as plt
 
+
 class GenISP(th.nn.Module):
 
     def __init__(self):
@@ -45,37 +46,39 @@ def load_image(path):
         # pack
         conversion_matrix = raw.rgb_xyz_matrix
         raw_image = raw.raw_image_visible.astype(np.int32)
-        packed_image = np.zeros((int(raw_image.shape[0]/2), int(raw_image.shape[1]/2), 4), dtype=np.int32)
-        new_image[:, :, 0] = raw_image[0::2, 0::2]
-        new_image[:, :, 1] = raw_image[0::2, 1::2]
-        new_image[:, :, 2] = raw_image[1::2, 0::2]
-        new_image[:, :, 3] = raw_image[1::2, 1::2]
+        packed_image = np.zeros((int(raw_image.shape[0] / 2), int(raw_image.shape[1] / 2), 4), dtype=np.int32)
+        packed_image[:, :, 0] = raw_image[0::2, 0::2]
+        packed_image[:, :, 1] = raw_image[0::2, 1::2]
+        packed_image[:, :, 2] = raw_image[1::2, 0::2]
+        packed_image[:, :, 3] = raw_image[1::2, 1::2]
+        print(packed_image.shape)
 
         # averaged green channel
-        averaged_image = np.zeros((int(raw_image.shape[0]/2), int(raw_image.shape[1]/2), 3), dtype=np.int32)
-        averaged_image[:, :, 0] = new_image[:, :, 0]
-        averaged_image[:, :, 1] = new_image[:, :, 1]
-        averaged_image[:, :, 2] = int(1/2 * (new_image[:, :, 2] + new_image[:, :, 3]))
+        averaged_image = np.zeros((int(raw_image.shape[0] / 2), int(raw_image.shape[1] / 2), 3), dtype=np.int32)
+        averaged_image[:, :, 0] = packed_image[:, :, 0]
+        averaged_image[:, :, 1] = packed_image[:, :, 1]
+        averaged_image[:, :, 2] = (packed_image[:, :, 2] + packed_image[:, :, 3]) / 2
+        print(averaged_image.shape)
+        averaged_max_value = np.max(averaged_image)
+        normalized_averaged_image = averaged_image / averaged_max_value
+        print(normalized_averaged_image.shape, normalized_averaged_image[0, 0])
+        plt.imshow(normalized_averaged_image)
+        plt.show()
 
         # convert color channel
         conversion_matrix = raw.rgb_xyz_matrix
-        converted_image = np.zeros((int(raw_image.shape[0]/2), int(raw_image.shape[1]/2), 3), dtype=np.int32)
-        converted_image[:, :] = np.matmul(conversion_matrix, averaged_image[:,:])
+        print(conversion_matrix, conversion_matrix.shape)
 
+        xyz_image = averaged_image @ conversion_matrix.T
+        print(xyz_image.shape)
+        max_value = np.max(xyz_image)
 
-        print(new_image.shape)
-        plt.imshow(converted_image[:, :, 2])
+        normalized_image = xyz_image / max_value
+        print(normalized_image.shape, normalized_image[0, 0, 0:3])
+
+        plt.imshow(normalized_image[:, :, 0:3])
         plt.show()
-
-        # average green channels form the packed representation
-
-        # # apply CST matrix
-        # for h_i in range(h):
-        #     for w_i in range(w):
-        #         print(conversion_matrix.shape, raw_img[h_i, w_i].shape)
-        #         xyz_img[h_i, w_i] = np.matmul(conversion_matrix, raw_img[h_i, w_i])
-
-    return packed
+    return xyz_image
 
 
 def main():
