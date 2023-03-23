@@ -5,7 +5,7 @@ import os
 import rawpy
 import numpy as np
 
-from group52.retinanet import model
+# from group52.retinanet import model
 from matplotlib import pyplot as plt
 
 class GenISP(th.nn.Module):
@@ -42,16 +42,29 @@ def load_image(path):
     with rawpy.imread(path) as raw:
         print(raw)
 
+        # pack
         conversion_matrix = raw.rgb_xyz_matrix
         raw_image = raw.raw_image_visible.astype(np.int32)
-        new_image = np.zeros((int(raw_image.shape[0]/2), int(raw_image.shape[1]/2), 4), dtype=np.int32)
+        packed_image = np.zeros((int(raw_image.shape[0]/2), int(raw_image.shape[1]/2), 4), dtype=np.int32)
         new_image[:, :, 0] = raw_image[0::2, 0::2]
         new_image[:, :, 1] = raw_image[0::2, 1::2]
         new_image[:, :, 2] = raw_image[1::2, 0::2]
         new_image[:, :, 3] = raw_image[1::2, 1::2]
 
+        # averaged green channel
+        averaged_image = np.zeros((int(raw_image.shape[0]/2), int(raw_image.shape[1]/2), 3), dtype=np.int32)
+        averaged_image[:, :, 0] = new_image[:, :, 0]
+        averaged_image[:, :, 1] = new_image[:, :, 1]
+        averaged_image[:, :, 2] = int(1/2 * (new_image[:, :, 2] + new_image[:, :, 3]))
+
+        # convert color channel
+        conversion_matrix = raw.rgb_xyz_matrix
+        converted_image = np.zeros((int(raw_image.shape[0]/2), int(raw_image.shape[1]/2), 3), dtype=np.int32)
+        converted_image[:, :] = np.matmul(conversion_matrix, averaged_image[:,:])
+
+
         print(new_image.shape)
-        plt.imshow(new_image[:, :, 2])
+        plt.imshow(converted_image[:, :, 2])
         plt.show()
 
         # average green channels form the packed representation
@@ -66,8 +79,8 @@ def load_image(path):
 
 
 def main():
-    object_detector = model.resnet50(num_classes=80)
-    object_detector.load_state_dict(th.load('../data/coco_resnet_50_map_0_335_state_dict.pt', map_location=th.device('cpu')))
+    # object_detector = model.resnet50(num_classes=80)
+    # object_detector.load_state_dict(th.load('../data/coco_resnet_50_map_0_335_state_dict.pt', map_location=th.device('cpu')))
 
     data_dir = '../data/our_sony/'
     images_paths = os.listdir(data_dir)
