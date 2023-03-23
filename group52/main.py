@@ -30,6 +30,51 @@ class GenISP(th.nn.Module):
                                                  th.nn.Conv2d(64, 3, 1))
 
 
+def regression_loss(object_detector):
+    """
+    What do we do here?
+    Paper says 'regression loss [is implemented by] by smooth-L1 loss'
+    """
+    # TODO! implement
+    return 0
+
+
+def penalize_intensive_colors():
+    """
+    However, we observe than when trained with an object
+    detection dataset without any constraints, GenISP reduces
+    color saturation and loses colors not important for
+    discrimination of objects in the dataset. If keeping the colors is
+    important, an additional loss term can be employed:
+    See equation (4) in the paper
+    This loss term inspired by gray-world hypothesis encourages the model to
+    balance the average intensity between each color channel.
+    """
+    # TODO! implement
+    return 0
+
+
+
+def calculate_loss(object_detector: model, keep_colors: bool = False):  # I am quite sure we need some other parameters
+    """
+    The total loss is composed of classification and regression loss:
+    L_total = L_cls + L_reg
+
+    As for our experiments, we use RetinaNet as the detector
+    for guiding GenISP during the training, so the classification
+    loss is implemented by α-balanced focal loss [16] and regression
+    loss by smooth-L1 loss
+    """
+    loss = classification_loss(object_detector) + regression_loss(object_detector)
+    if keep_colors:
+        loss += penalize_intensive_colors()
+    return loss
+
+def classification_loss(object_detector):
+    # In RetinaNet classification loss is implemented by α-balanced focal loss
+    # TODO! Check if correct
+    return object_detector.focalLoss
+
 def get_hyper_parameters():
     return {
         'epochs': 12,
@@ -62,4 +107,5 @@ def main():
 
 
 if __name__ == '__main__':
+    print(get_hyper_parameters())
     main()
