@@ -1,15 +1,6 @@
 import os
-
-import rawpy
-from rawpy._rawpy import ColorSpace, FBDDNoiseReductionMode
 from PIL import Image
-
-
-def auto_post_process_image(path):
-    print('Loading image: {}'.format(path))
-    with rawpy.imread(path) as raw:
-        post_processed_image = raw.postprocess(half_size=True, fbdd_noise_reduction=FBDDNoiseReductionMode.Full)
-        return post_processed_image
+from image_helper import auto_post_process_image
 
 
 def main():
