@@ -9,6 +9,7 @@ import numpy as np
 
 from group52.retinanet import model
 from matplotlib import pyplot as plt
+import json
 
 
 def load_image(path):
@@ -22,40 +23,38 @@ def load_image(path):
         print(raw)
 
         # pack
-        conversion_matrix = raw.rgb_xyz_matrix
         raw_image = raw.raw_image_visible.astype(np.int32)
         packed_image = np.zeros((int(raw_image.shape[0] / 2), int(raw_image.shape[1] / 2), 4), dtype=np.int32)
         packed_image[:, :, 0] = raw_image[0::2, 0::2]
         packed_image[:, :, 1] = raw_image[0::2, 1::2]
         packed_image[:, :, 2] = raw_image[1::2, 0::2]
         packed_image[:, :, 3] = raw_image[1::2, 1::2]
-        print(packed_image.shape)
 
         # averaged green channel
         averaged_image = np.zeros((int(raw_image.shape[0] / 2), int(raw_image.shape[1] / 2), 3), dtype=np.int32)
         averaged_image[:, :, 0] = packed_image[:, :, 0]
         averaged_image[:, :, 1] = packed_image[:, :, 1]
         averaged_image[:, :, 2] = (packed_image[:, :, 2] + packed_image[:, :, 3]) / 2
-        print(averaged_image.shape)
+
+        # Display the averaged image
         averaged_max_value = np.max(averaged_image)
-        normalized_averaged_image = averaged_image / averaged_max_value
-        print(normalized_averaged_image.shape, normalized_averaged_image[0, 0])
-        plt.imshow(normalized_averaged_image)
-        plt.show()
+        # normalized_averaged_image = averaged_image / averaged_max_value
+        # print(normalized_averaged_image.shape, normalized_averaged_image[0, 0])
+        # plt.imshow(normalized_averaged_image)
+        # plt.show()
 
         # convert color channel
         conversion_matrix = raw.rgb_xyz_matrix
         print(conversion_matrix, conversion_matrix.shape)
 
         xyz_image = averaged_image @ conversion_matrix.T
-        print(xyz_image.shape)
-        max_value = np.max(xyz_image)
 
-        normalized_image = xyz_image / max_value
-        print(normalized_image.shape, normalized_image[0, 0, 0:3])
-
-        plt.imshow(normalized_image[:, :, 0:3])
-        plt.show()
+        # Display the xyz image
+        # max_value = np.max(xyz_image)
+        # normalized_image = xyz_image / max_value
+        # print(normalized_image.shape, normalized_image[0, 0, 0:3])
+        # plt.imshow(normalized_image[:, :, 0:3])
+        # plt.show()
     return xyz_image
 
 
@@ -192,18 +191,34 @@ def get_hyper_parameters():
 
 def main():
 
-    gen_isp = GenISP()
+    # gen_isp = GenISP()
     object_detector = model.resnet50(num_classes=80)
     object_detector.load_state_dict(th.load('../data/coco_resnet_50_map_0_335_state_dict.pt', map_location=th.device('cpu')))
 
     data_dir = '../data/our_sony/'
-    images_paths = os.listdir(data_dir)
+    # load_labels
+    f = open(data_dir + 'raw_new_Sony_RX100m7_train.json')
+    data = json.load(f)
+    category_ids = set()
+    image_id = data['annotations'][0]['image_id']
+    for image in data['annotations']:
+        if image['image_id'] == image_id:
+            print(image)
+        if image['iscrowd'] > 0:
+            print(image)
+        category_ids.add(image['category_id'])
+    print(category_ids)
+
+    print(data.keys())
+
+    raw_images_dir = data_dir + 'raw_images/'
+    images_paths = os.listdir(raw_images_dir)
     for p in images_paths:
-        y_true = ''
-        image = load_image(data_dir + p)
-        enhanced_image = gen_isp(image)
-        y_pred = object_detector(enhanced_image)
-        reg_loss = regression_loss(y_pred, y_true)
+        image = load_image(raw_images_dir + p)
+        # enhanced_image = gen_isp(image)
+        y_pred = object_detector(image)
+        print(y_pred)
+        # reg_loss = regression_loss(y_pred, y_true)
 
 
 if __name__ == '__main__':
