@@ -2,36 +2,13 @@ import math
 from copy import deepcopy
 
 import torch as th
+import torch.nn.functional as F
 import os
 import rawpy
 import numpy as np
 
 from group52.retinanet import model
 from matplotlib import pyplot as plt
-
-
-class GenISP(th.nn.Module):
-
-    def __init__(self):
-        super().__init__()
-        # minimal pre-processing pipeline packing and color space transformation
-
-        # 2-step color processing stage realized by image-to-parameter modules: ConvWB and ConvCC
-        self.image_to_parameter = th.nn.Sequential(
-            th.nn.Conv2d(3, 16, 7), th.nn.LeakyReLU(), th.nn.MaxPool2d(),
-            th.nn.Conv2d(16, 32, 5), th.nn.LeakyReLU(), th.nn.MaxPool2d(),
-            th.nn.Conv2d(32, 128, 3), th.nn.LeakyReLU(), th.nn.MaxPool2d(),
-            th.nn.AdaptiveAvgPool2d(1)
-        )
-        self.conv_wb = th.nn.Sequential(deepcopy(self.image_to_parameter),
-                                        th.nn.Linear(3, 1))
-        self.conv_cc = th.nn.Sequential(deepcopy(self.image_to_parameter),
-                                        th.nn.Linear(9, 1))
-
-        # A non-linear local image enhancement by a shallow ConvNet
-        self.shallow_conv_net = th.nn.Sequential(th.nn.Conv2d(3, 16, 3), th.nn.InstanceNorm2d(), th.nn.LeakyReLU(),
-                                                 th.nn.Conv2d(16, 64, 3), th.nn.InstanceNorm2d(), th.nn.LeakyReLU(),
-                                                 th.nn.Conv2d(64, 3, 1))
 
 
 def load_image(path):
@@ -82,7 +59,61 @@ def load_image(path):
     return xyz_image
 
 
-def regression_loss(object_detector, original_image):
+class Diagonalize(th.nn.Module):
+
+    def __init__(self):
+        super().__init__()
+        self.diag = th.diag
+
+    def forward(self, x):
+        return self.diag(x)
+
+
+class GenISP(th.nn.Module):
+
+    def __init__(self):
+        super().__init__()
+        # minimal pre-processing pipeline packing and color space transformation
+
+        # 2-step color processing stage realized by image-to-parameter modules: ConvWB and ConvCC
+        self.image_to_parameter = th.nn.Sequential(
+            th.nn.Conv2d(3, 16, 7), th.nn.LeakyReLU(), th.nn.MaxPool2d(),
+            th.nn.Conv2d(16, 32, 5), th.nn.LeakyReLU(), th.nn.MaxPool2d(),
+            th.nn.Conv2d(32, 128, 3), th.nn.LeakyReLU(), th.nn.MaxPool2d(),
+            th.nn.AdaptiveAvgPool2d(1)
+        )
+
+        self.conv_wb = th.nn.Sequential(
+            F.interpolate(size=(256, 256), mode='bilinear'),
+            deepcopy(self.image_to_parameter),
+            th.nn.Linear(128, 3),
+            Diagonalize(),
+        )
+
+        self.conv_cc = th.nn.Sequential(
+            F.interpolate(size=(256, 256), mode='bilinear'),
+            deepcopy(self.image_to_parameter),
+            th.nn.Linear(128, 9),
+            th.nn.Unflatten(1, (3, 3))
+        )
+
+        # A non-linear local image enhancement by a shallow ConvNet
+        self.shallow_conv_net = th.nn.Sequential(th.nn.Conv2d(3, 16, 3), th.nn.InstanceNorm2d(), th.nn.LeakyReLU(),
+                                                 th.nn.Conv2d(16, 64, 3), th.nn.InstanceNorm2d(), th.nn.LeakyReLU(),
+                                                 th.nn.Conv2d(64, 3, 1))
+
+    def forward(self, batch):
+        """
+        :param batch: batch of images
+        :return: enhanced images
+        """
+        x = self.conv_wb(batch)
+        x = self.conv_cc(x)
+        x = self.shallow_conv_net(x)
+        return x
+
+
+def regression_loss(object_detector):
     """
     What do we do here?
     Paper says 'regression loss [is implemented by] by smooth-L1 loss'
@@ -112,9 +143,7 @@ def penalize_intensive_colors(enhanced_image):
     loss = abs(avg_intensity[0] - avg_intensity[1]) + abs(avg_intensity[0] - avg_intensity[2]) + abs(avg_intensity[1] - avg_intensity[2])
     return loss
 
-
-
-def calculate_loss(object_detector: model, keep_colors: bool = False, weight):  # I am quite sure we need some other parameters
+def calculate_loss(object_detector: model, keep_colors: bool = False):  # I am quite sure we need some other parameters
     """
     The total loss is composed of classification and regression loss:
     L_total = L_cls + L_reg
@@ -129,10 +158,12 @@ def calculate_loss(object_detector: model, keep_colors: bool = False, weight):  
         loss += weight * penalize_intensive_colors()
     return loss
 
+
 def classification_loss(object_detector):
     # In RetinaNet classification loss is implemented by α-balanced focal loss
     # TODO! Check if correct
     return object_detector.focalLoss
+
 
 def get_hyper_parameters():
     return {
