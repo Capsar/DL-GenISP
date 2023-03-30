@@ -66,7 +66,6 @@ def main():
 
         image_np_array = auto_post_process_image(raw_images_dir + p)
         image_tensor = th.from_numpy(image_np_array).unsqueeze(0).permute(0, 3, 1, 2).div(255.0)
-
         enhanced_image = gen_isp(image_tensor)
         with th.no_grad():
             outputs = object_detector(enhanced_image)
@@ -74,6 +73,16 @@ def main():
 
         print(annotations)
         print(list(zip(output_boxes, output_categories)))
+        gen_isp.optimizer.zero_grad()
+        # TODO: Calculate loss between annotations and predictions (output_boxes, output_categories)
+        classification_loss = 0
+        regression_loss = 0
+        total_loss = classification_loss + regression_loss
+
+        # Backpropagate loss & take optimizer step
+        total_loss.backward()
+        gen_isp.optimizer.step()
+
 
 
 if __name__ == '__main__':

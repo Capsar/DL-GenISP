@@ -58,14 +58,14 @@ class GenISP(th.nn.Module):
                                                  th.nn.Conv2d(16, 64, kernel_size=3, padding=1), th.nn.InstanceNorm2d(64), th.nn.LeakyReLU(),
                                                  th.nn.Conv2d(64, 3, kernel_size=1))
 
+        self.optimizer = th.optim.Adam(self.parameters(), lr=1e-4)
+
     def forward(self, batch):
         """
         :param batch: batch of images
         :return: enhanced images
         """
-        print(batch.shape)
         wb_matrix = self.conv_wb(batch)
-
         batch = th.matmul(batch.permute(0, 2, 3, 1), wb_matrix).permute(0, 3, 1, 2)
         cc_matrix = self.conv_cc(batch)
         batch = th.matmul(batch.permute(0, 2, 3, 1), cc_matrix).permute(0, 3, 1, 2)

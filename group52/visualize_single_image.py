@@ -38,4 +38,4 @@ def visualize_images_in_folder(image_path, model_path, class_list, detection_thr
 
 
 if __name__ == '__main__':
-    visualize_images_in_folder('../data/our_sony/processed_images/', '../data/retinanetv2_object_detector.pickle', '../data/class_list.csv')
+    visualize_images_in_folder('../data/our_sony/processed_images/', '../data/retinanet_v2_object_detector.pickle', '../data/class_list.csv')
