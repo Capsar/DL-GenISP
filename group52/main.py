@@ -6,7 +6,7 @@ import os
 import rawpy
 import numpy as np
 
-# from group52.retinanet import model
+from group52.retinanet import model
 from matplotlib import pyplot as plt
 
 
@@ -82,16 +82,21 @@ def load_image(path):
     return xyz_image
 
 
-def regression_loss(object_detector):
+def regression_loss(object_detector, original_image):
     """
     What do we do here?
     Paper says 'regression loss [is implemented by] by smooth-L1 loss'
     """
-    # TODO! implement
-    return 0
+    # TODO! let's see if it works :)) (finger crossed)
+    loss = torch.nn.SmoothL1Loss()
+
+    retinanet = model.resnet50(num_classes=dataset_train.num_classes(),)
+    retinanet.load_state_dict(torch.load(PATH_TO_WEIGHTS))
+    
+    return loss(object_detector, retinanet(original_image))
 
 
-def penalize_intensive_colors():
+def penalize_intensive_colors(enhanced_image):
     """
     However, we observe than when trained with an object
     detection dataset without any constraints, GenISP reduces
@@ -102,12 +107,14 @@ def penalize_intensive_colors():
     This loss term inspired by gray-world hypothesis encourages the model to
     balance the average intensity between each color channel.
     """
-    # TODO! implement
-    return 0
+
+    avg_intensity = np.mean(enhanced_image, axis=(0, 1))
+    loss = abs(avg_intensity[0] - avg_intensity[1]) + abs(avg_intensity[0] - avg_intensity[2]) + abs(avg_intensity[1] - avg_intensity[2])
+    return loss
 
 
 
-def calculate_loss(object_detector: model, keep_colors: bool = False):  # I am quite sure we need some other parameters
+def calculate_loss(object_detector: model, keep_colors: bool = False, weight):  # I am quite sure we need some other parameters
     """
     The total loss is composed of classification and regression loss:
     L_total = L_cls + L_reg
@@ -119,7 +126,7 @@ def calculate_loss(object_detector: model, keep_colors: bool = False):  # I am q
     """
     loss = classification_loss(object_detector) + regression_loss(object_detector)
     if keep_colors:
-        loss += penalize_intensive_colors()
+        loss += weight * penalize_intensive_colors()
     return loss
 
 def classification_loss(object_detector):
