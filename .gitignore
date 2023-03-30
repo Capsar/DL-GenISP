@@ -8,3 +8,7 @@ data/our_sony/*.ARW
 data/coco_resnet_50_map_0_335_state_dict.pt
 
 
+
+*.NEF
+
+*.ARW

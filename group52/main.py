@@ -123,7 +123,7 @@ def regression_loss(object_detector):
 
     retinanet = model.resnet50(num_classes=dataset_train.num_classes(),)
     retinanet.load_state_dict(torch.load(PATH_TO_WEIGHTS))
-    
+
     return loss(object_detector, retinanet(original_image))
 
 
@@ -191,14 +191,19 @@ def get_hyper_parameters():
 
 
 def main():
-    # object_detector = model.resnet50(num_classes=80)
-    # object_detector.load_state_dict(th.load('../data/coco_resnet_50_map_0_335_state_dict.pt', map_location=th.device('cpu')))
+
+    gen_isp = GenISP()
+    object_detector = model.resnet50(num_classes=80)
+    object_detector.load_state_dict(th.load('../data/coco_resnet_50_map_0_335_state_dict.pt', map_location=th.device('cpu')))
 
     data_dir = '../data/our_sony/'
     images_paths = os.listdir(data_dir)
     for p in images_paths:
+        y_true = ''
         image = load_image(data_dir + p)
-        break
+        enhanced_image = gen_isp(image)
+        y_pred = object_detector(enhanced_image)
+        reg_loss = regression_loss(y_pred, y_true)
 
 
 if __name__ == '__main__':
