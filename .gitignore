@@ -12,3 +12,9 @@ data/coco_resnet_50_map_0_335_state_dict.pt
 *.NEF
 
 *.ARW
+
+*.png
+
+data/resnet50-19c8e357.pth
+
+*.pickle

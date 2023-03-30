@@ -320,14 +320,14 @@ def resnet34(num_classes, pretrained=False, **kwargs):
     return model
 
 
-def resnet50(num_classes, pretrained=False, **kwargs):
+def resnet50(num_classes, pretrained=False, model_dir='.', **kwargs):
     """Constructs a ResNet-50 model.
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
     model = ResNet(num_classes, Bottleneck, [3, 4, 6, 3], **kwargs)
     if pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls['resnet50'], model_dir='.'), strict=False)
+        model.load_state_dict(model_zoo.load_url(model_urls['resnet50'], model_dir=model_dir), strict=False)
     return model
 
 

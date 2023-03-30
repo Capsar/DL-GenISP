@@ -6,6 +6,7 @@ import torch.nn.functional as F
 import os
 import rawpy
 import numpy as np
+from rawpy._rawpy import ColorSpace
 
 from group52.retinanet import model
 from matplotlib import pyplot as plt
@@ -15,48 +16,50 @@ import json
 def load_image(path):
     """
         Source: https://www.quora.com/What-is-the-RGB-to-XYZ-conversion-matrix-Is-it-possible-to-convert-from-RGB-to-XYZ-using-just-this-matrix-no-other-information-If-not-why-not
-    :param path: path to the raw image.
-    :return: loaded image.
+        :param path: path to the raw image.
+        :return: loaded image.
     """
-    print(path)
+    print('Loading image: {}'.format(path))
     with rawpy.imread(path) as raw:
-        print(raw)
 
         # pack
-        raw_image = raw.raw_image_visible.astype(np.int32)
+        raw_image = raw.raw_image.astype(np.int32)
         packed_image = np.zeros((int(raw_image.shape[0] / 2), int(raw_image.shape[1] / 2), 4), dtype=np.int32)
-        packed_image[:, :, 0] = raw_image[0::2, 0::2]
-        packed_image[:, :, 1] = raw_image[0::2, 1::2]
-        packed_image[:, :, 2] = raw_image[1::2, 0::2]
-        packed_image[:, :, 3] = raw_image[1::2, 1::2]
+        packed_image[:, :, 0] = raw_image[0::2, 0::2] # R Left top
+        packed_image[:, :, 1] = raw_image[0::2, 1::2] # G Right top
+        packed_image[:, :, 2] = raw_image[1::2, 0::2] # G Left bottom
+        packed_image[:, :, 3] = raw_image[1::2, 1::2] # B Right bottom
 
         # averaged green channel
-        averaged_image = np.zeros((int(raw_image.shape[0] / 2), int(raw_image.shape[1] / 2), 3), dtype=np.int32)
-        averaged_image[:, :, 0] = packed_image[:, :, 0]
-        averaged_image[:, :, 1] = packed_image[:, :, 1]
-        averaged_image[:, :, 2] = (packed_image[:, :, 2] + packed_image[:, :, 3]) / 2
-
-        # Display the averaged image
-        averaged_max_value = np.max(averaged_image)
-        # normalized_averaged_image = averaged_image / averaged_max_value
-        # print(normalized_averaged_image.shape, normalized_averaged_image[0, 0])
-        # plt.imshow(normalized_averaged_image)
-        # plt.show()
+        averaged_image = np.zeros((packed_image.shape[0], packed_image.shape[1], 3), dtype=np.int32)
+        averaged_image[:, :, 0] = packed_image[:, :, 0] # R
+        averaged_image[:, :, 1] = (packed_image[:, :, 1] + packed_image[:, :, 2]) # G
+        averaged_image[:, :, 2] = packed_image[:, :, 3] # B
 
         # convert color channel
         conversion_matrix = raw.rgb_xyz_matrix
-        print(conversion_matrix, conversion_matrix.shape)
 
-        xyz_image = averaged_image @ conversion_matrix.T
+        # Or from packed or from averaged
+        xyz_image = packed_image @ conversion_matrix
+        plt.imshow(xyz_image / 2**13)
+        plt.show()
 
-        # Display the xyz image
-        # max_value = np.max(xyz_image)
-        # normalized_image = xyz_image / max_value
-        # print(normalized_image.shape, normalized_image[0, 0, 0:3])
-        # plt.imshow(normalized_image[:, :, 0:3])
-        # plt.show()
-    return xyz_image
+        xyz_image = averaged_image @ conversion_matrix[0:3, 0:3]
+        plt.imshow(xyz_image / 2**13)
+        plt.show()
 
+        return th.from_numpy(xyz_image).float()
+
+
+def auto_post_process_image(path):
+    print('Loading image: {}'.format(path))
+    with rawpy.imread(path) as raw:
+        post_processed_image = raw.postprocess(half_size=True, no_auto_bright=True, output_color=ColorSpace.XYZ)
+        plt.imshow(post_processed_image)
+        plt.show()
+        print(post_processed_image.shape)
+
+        return th.from_numpy(post_processed_image).float()
 
 class Diagonalize(th.nn.Module):
 
@@ -192,33 +195,38 @@ def get_hyper_parameters():
 def main():
 
     # gen_isp = GenISP()
-    object_detector = model.resnet50(num_classes=80)
-    object_detector.load_state_dict(th.load('../data/coco_resnet_50_map_0_335_state_dict.pt', map_location=th.device('cpu')))
+    object_detector = model.resnet50(num_classes=80, pretrained=True, model_dir='../data/')
+    th.save(object_detector, '../data/resnet50_object_detector.pickle')
+    object_detector.eval()
 
     data_dir = '../data/our_sony/'
     # load_labels
-    f = open(data_dir + 'raw_new_Sony_RX100m7_train.json')
+    f = open(data_dir + 'raw_new_train.json')
     data = json.load(f)
-    category_ids = set()
-    image_id = data['annotations'][0]['image_id']
+    data_dict = {}
     for image in data['annotations']:
-        if image['image_id'] == image_id:
-            print(image)
-        if image['iscrowd'] > 0:
-            print(image)
-        category_ids.add(image['category_id'])
-    print(category_ids)
+        if image['image_id'] in data_dict.keys():
+            data_dict[image['image_id']].append([image['bbox'], image['category_id']])
+        else:
+            data_dict[image['image_id']] = [[image['bbox'], image['category_id']]]
 
     print(data.keys())
 
     raw_images_dir = data_dir + 'raw_images/'
     images_paths = os.listdir(raw_images_dir)
     for p in images_paths:
-        image = load_image(raw_images_dir + p)
-        # enhanced_image = gen_isp(image)
+        image_id = p.split('.')[0]
+        annotations = data_dict[image_id]
+        image = load_image(raw_images_dir + p).unsqueeze(0)
+        image = image.reshape(1, image.shape[-1], image.shape[1], image.shape[2])
+        #
+        # print(image.shape, annotations)
+        # # enhanced_image = gen_isp(image)
         y_pred = object_detector(image)
         print(y_pred)
         # reg_loss = regression_loss(y_pred, y_true)
+
+
 
 
 if __name__ == '__main__':
