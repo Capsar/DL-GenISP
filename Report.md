@@ -1,10 +1,30 @@
 ## Introduction
 
 ### Description of the original paper
+
 ### Data
+The dataset consists of 7K raw images collected
+using two cameras, Sony RX100 (3.2K images) and
+Nikon D750 (4.0K), and bounding box annotations of
+people, bicycles and cars. The images have been taken in different low-light conditions: ranging from pitch dark to less challenging conditions with artificial lighting.
+Authors have made the dataset publicly available to allow benchmarking of future methods targeting object detection in low-light conditions.
 
+#### What is raw image format?
+A raw image format refers to the unprocessed image data 
+captured by a digital camera's sensor.
+
+
+#### Why use raw image format?
+TODO explain this:
+"As showed by Hong et al. [7], detectors us-
+ing raw sensor data perform significantly better than de-
+tectors using sRGB data processed by a traditional ISP
+pipeline."
+n contrast with these methods, we propose a neural ISP that
+adapts raw image data into representation optimal for machine cognition so that a pre-trained object detector can be
+used without any need for fine-tuning or re-training."
 ## Reproduction
-
+![img.png](report_resources/screenshot_pipeline.png)
 ### Our approach
 ### Methods
 #### Pre-processing
