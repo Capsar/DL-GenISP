@@ -12,6 +12,17 @@ from group52.gen_isp import load_annotations, GenISP
 from group52.image_helper import auto_post_process_image
 from group52.retinanet_helper import create_label_dictionary, process_model_output
 
+# Load focal loss model from https://github.com/AdeelH/pytorch-multi-class-focal-loss
+focal_loss = torch.hub.load(
+    'adeelh/pytorch-multi-class-focal-loss',
+    model='focal_loss',
+    alpha=[.75, .25],
+    gamma=2,
+    reduction='mean',
+    device='cpu',
+    dtype=torch.float32,
+    force_reload=False
+)
 
 def get_hyper_parameters():
     return {
@@ -75,15 +86,22 @@ def main():
         print(list(zip(output_boxes, output_categories)))
         gen_isp.optimizer.zero_grad()
         # TODO: Calculate loss between annotations and predictions (output_boxes, output_categories)
-        classification_loss = 0
-        regression_loss = 0
+        classification_loss = classification_loss(output_categories, annotations)
+        regression_loss = regression_loss(output_categories, annotations)
         total_loss = classification_loss + regression_loss
 
         # Backpropagate loss & take optimizer step
         total_loss.backward()
         gen_isp.optimizer.step()
 
+# Calculate focal loss as classification loss
+def classification_loss(output_categories, annotations):
+    loss = focal_loss(output_categories, annotations)
 
+# Calculate smooth L1 loss as regression loss
+def regression_loss(output_categories, annotations):
+    smoothl1loss = torch.nn.SmoothL1Loss()
+    return smoothl1loss(output_categories, annotations)
 
 if __name__ == '__main__':
     main()
