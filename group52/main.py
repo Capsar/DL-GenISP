@@ -14,8 +14,8 @@ from group52.retinanet_helper import create_label_dictionary
 
 def get_hyper_parameters():
     return {
-        'epochs': 12,
-        'batch_size': 1,
+        'epochs': 50,
+        'batch_size': 2,
 
         # Key states from which epoch the learning rate is enabled,
         # Value is the learning rate.

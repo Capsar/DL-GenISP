@@ -60,7 +60,7 @@ class GenISP(th.nn.Module):
                                                  th.nn.Conv2d(16, 64, kernel_size=3, padding=1), th.nn.InstanceNorm2d(64), th.nn.LeakyReLU(),
                                                  th.nn.Conv2d(64, 3, kernel_size=1))
 
-        self.optimizer = th.optim.Adam(self.parameters(), lr=1e-4)
+        self.optimizer = th.optim.Adam(self.parameters(), lr=1e-2)
 
     def forward(self, batch):
         """
