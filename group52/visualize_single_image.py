@@ -29,7 +29,8 @@ def visualize_images_in_folder(image_path, model_path, class_list, detection_thr
 
         with torch.no_grad():
             outputs = model(image_tensor)
-            output_boxes, output_categories, output_classes = process_model_output(outputs, detection_threshold, labels)
+            _, output_boxes, output_categories = process_model_output(outputs, detection_threshold, labels)
+            output_classes = [labels[category][0] for category in output_categories]
 
         image = draw_boxes(output_boxes, output_classes, image_array)
         cv2.namedWindow('detections', cv2.WINDOW_NORMAL)

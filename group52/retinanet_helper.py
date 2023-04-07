@@ -1,6 +1,7 @@
 import csv
 
 import numpy as np
+import torch as th
 
 np.random.seed(42)
 COLORS = np.random.uniform(0, 255, size=(4, 3))
@@ -34,17 +35,12 @@ def create_label_dictionary(class_list):
 
 
 def process_model_output(outputs, detection_threshold, labels):
-    pred_scores = outputs[0]['scores'].detach().cpu().numpy()
-    pred_bboxes = outputs[0]['boxes'].detach().cpu().numpy().astype(np.int32)
-    pred_labels = outputs[0]['labels'].detach().cpu().numpy()
-
-    output_boxes = []
-    output_categories = []
-    output_classes = []
-    for score, bbox, label in zip(pred_scores, pred_bboxes, pred_labels):
-        if score > detection_threshold and label in labels:
-            output_boxes.append(bbox)
-            output_categories.append(label)
-            output_classes.append(labels[label])
-
-    return np.array(output_boxes), np.array(output_categories), output_classes
+    pred_scores = outputs[0]['scores'].detach().cpu()
+    pred_bboxes = outputs[0]['boxes'].detach().cpu()
+    pred_labels = outputs[0]['labels'].detach().cpu()
+    output_indices = (pred_scores > detection_threshold).nonzero()
+    print(output_indices)
+    output_probs = pred_scores[output_indices].flatten()
+    output_bboxes = pred_bboxes[output_indices]
+    output_labels = pred_labels[output_indices].flatten()
+    return output_probs, output_bboxes, output_labels

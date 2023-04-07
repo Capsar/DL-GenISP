@@ -2,7 +2,6 @@ import os
 from PIL import Image
 from image_helper import auto_post_process_image
 
-
 def main():
     data_dir = '../data/our_sony/'
     raw_images_dir = data_dir + 'raw_images/'

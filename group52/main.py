@@ -1,33 +1,21 @@
-import csv
-import json
-import math
 import os
 
+import cv2
+import numpy as np
 import torch as th
 import torchvision.models.detection
+from PIL import Image
 from torchvision.models.detection import RetinaNet_ResNet50_FPN_V2_Weights
 
-from group52 import visualize_single_image, retinanet_helper
-from group52.gen_isp import load_annotations, GenISP
+from group52.gen_isp import load_annotations, GenISP, annotations_to_tensor
 from group52.image_helper import auto_post_process_image
-from group52.retinanet_helper import create_label_dictionary, process_model_output
+from group52.retinanet_helper import create_label_dictionary
 
-# Load focal loss model from https://github.com/AdeelH/pytorch-multi-class-focal-loss
-focal_loss = torch.hub.load(
-    'adeelh/pytorch-multi-class-focal-loss',
-    model='focal_loss',
-    alpha=[.75, .25],
-    gamma=2,
-    reduction='mean',
-    device='cpu',
-    dtype=torch.float32,
-    force_reload=False
-)
 
 def get_hyper_parameters():
     return {
         'epochs': 12,
-        'batch_size': 8,
+        'batch_size': 1,
 
         # Key states from which epoch the learning rate is enabled,
         # Value is the learning rate.
@@ -44,64 +32,69 @@ def get_hyper_parameters():
         # resize the images to a maximum size of 1333 × 800 and
         # keep the image aspect ratio. In ConvWB and ConvCC, we
         # resize input to 256 × 256 using bilinear interpolation
-        'resized_image_height': 800,
+        'resize': (1333, 800),
         'detection_threshold': 0.6,
         'class_list': '../data/class_list.csv',
 
     }
 
 
-
-def main():
+def main(preprocess_images=False):
     h_parameters = get_hyper_parameters()
 
     gen_isp = GenISP()
 
     labels = create_label_dictionary(h_parameters['class_list'])
+    print('Loaded labels:', labels)
 
+    # Load the model https://github.com/pytorch/vision/blob/main/torchvision/models/detection/retinanet.py
     object_detector = torchvision.models.detection.retinanet_resnet50_fpn_v2(weights=RetinaNet_ResNet50_FPN_V2_Weights.COCO_V1)
+    object_detector.requires_grad_(False)
     th.save(object_detector, '../data/retinanet_v2_object_detector.pickle')
-    object_detector.eval()
 
     data_dir = '../data/our_sony/'
     # load_label
-    annotations_dict = load_annotations(data_dir + 'raw_new_train.json')
-    annotations_dict = load_annotations(data_dir + 'raw_new_test.json', annotations_dict)
-    annotations_dict = load_annotations(data_dir + 'raw_new_val.json', annotations_dict)
+    targets_per_image = load_annotations(data_dir + 'raw_new_train.json')
+    targets_per_image = load_annotations(data_dir + 'raw_new_test.json', targets_per_image)
+    targets_per_image = load_annotations(data_dir + 'raw_new_val.json', targets_per_image)
+    targets_per_image = annotations_to_tensor(targets_per_image)
 
     raw_images_dir = data_dir + 'raw_images/'
-    images_paths = os.listdir(raw_images_dir)
-    for p in images_paths:
-        image_id = p.split('.')[0]
-        annotations = annotations_dict[image_id]
+    processed_images_dir = data_dir + 'processed_images/'
 
-        image_np_array = auto_post_process_image(raw_images_dir + p)
-        image_tensor = th.from_numpy(image_np_array).unsqueeze(0).permute(0, 3, 1, 2).div(255.0)
-        enhanced_image = gen_isp(image_tensor)
-        with th.no_grad():
-            outputs = object_detector(enhanced_image)
-            output_boxes, output_categories, output_classes = process_model_output(outputs, h_parameters['detection_threshold'], labels)
+    if preprocess_images:
+        images_paths = os.listdir(raw_images_dir)
+        for p in images_paths:
+            image_id = p.split('.')[0]
+            image = auto_post_process_image(raw_images_dir + p)
+            Image.fromarray(image).resize(h_parameters['resize']).save(processed_images_dir + image_id + '.png', format='png')
+            print(f'Saved image to: {processed_images_dir + image_id + ".png"}')
 
-        print(annotations)
-        print(list(zip(output_boxes, output_categories)))
-        gen_isp.optimizer.zero_grad()
-        # TODO: Calculate loss between annotations and predictions (output_boxes, output_categories)
-        classification_loss = classification_loss(output_categories, annotations)
-        regression_loss = regression_loss(output_categories, annotations)
-        total_loss = classification_loss + regression_loss
+    images_paths = os.listdir(processed_images_dir)
+    for epoch in range(h_parameters['epochs']):
+        epoch_loss = []
+        batch_inputs, batch_targets = [], []
+        for i, p in enumerate(images_paths):
+            print('Training on image:', p)
+            image_id = p.split('.')[0]
+            targets = targets_per_image[image_id]
+            image_np_array = cv2.imread(os.path.join(processed_images_dir, p))
+            image_tensor = th.from_numpy(image_np_array).unsqueeze(0).permute(0, 3, 1, 2).div(255.0)
+            batch_inputs.append(image_tensor)
+            batch_targets.append(targets)
 
-        # Backpropagate loss & take optimizer step
-        total_loss.backward()
-        gen_isp.optimizer.step()
+            # If we have a full batch, train the model
+            if len(batch_inputs) % h_parameters['batch_size'] == 0:
+                gen_isp_outputs = gen_isp(batch_inputs)
+                object_detector_losses = object_detector(gen_isp_outputs[0], batch_targets)
+                gen_isp.optimizer.zero_grad()
+                total_loss = object_detector_losses['classification'] + object_detector_losses['bbox_regression']
+                total_loss.backward()
+                gen_isp.optimizer.step()
+                epoch_loss.append(total_loss.item())
+                batch_inputs, batch_targets = [], []
+        print(f'{epoch} | Epoch loss: {np.mean(epoch_loss)}+/-{np.std(epoch_loss)}')
 
-# Calculate focal loss as classification loss
-def classification_loss(output_categories, annotations):
-    loss = focal_loss(output_categories, annotations)
-
-# Calculate smooth L1 loss as regression loss
-def regression_loss(output_categories, annotations):
-    smoothl1loss = torch.nn.SmoothL1Loss()
-    return smoothl1loss(output_categories, annotations)
 
 if __name__ == '__main__':
     main()

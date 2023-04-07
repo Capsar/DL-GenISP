@@ -15,6 +15,7 @@ class Diagonalize(th.nn.Module):
     def forward(self, x):
         return self.diag(x.squeeze())
 
+
 class Resize(th.nn.Module):
 
     def __init__(self, size):
@@ -23,6 +24,7 @@ class Resize(th.nn.Module):
 
     def forward(self, x):
         return F.interpolate(x, size=self.size, mode='bilinear')
+
 
 class GenISP(th.nn.Module):
 
@@ -65,12 +67,15 @@ class GenISP(th.nn.Module):
         :param batch: batch of images
         :return: enhanced images
         """
-        wb_matrix = self.conv_wb(batch)
-        batch = th.matmul(batch.permute(0, 2, 3, 1), wb_matrix).permute(0, 3, 1, 2)
-        cc_matrix = self.conv_cc(batch)
-        batch = th.matmul(batch.permute(0, 2, 3, 1), cc_matrix).permute(0, 3, 1, 2)
-        x = self.shallow_conv_net(batch)
-        return x
+        output = []
+        for image in batch:
+            wb_matrix = self.conv_wb(image)
+            image = th.matmul(image.permute(0, 2, 3, 1), wb_matrix).permute(0, 3, 1, 2)
+            cc_matrix = self.conv_cc(image)
+            image = th.matmul(image.permute(0, 2, 3, 1), cc_matrix).permute(0, 3, 1, 2)
+            x = self.shallow_conv_net(image)
+            output.append(x)
+        return output
 
 
 def penalize_intensive_colors(enhanced_image):
@@ -96,9 +101,19 @@ def load_annotations(file_path, previous_dictionary=None):
         annotation_dict = {}
         if previous_dictionary is not None:
             annotation_dict = previous_dictionary
+
         for image in data['annotations']:
             if image['image_id'] in annotation_dict.keys():
-                annotation_dict[image['image_id']].append([image['bbox'], image['category_id']])
+                bbox = [image['bbox'][0], image['bbox'][1], image['bbox'][0] + image['bbox'][2], image['bbox'][1] + image['bbox'][3]]
+                annotation_dict[image['image_id']]['boxes'].append(bbox)
+                annotation_dict[image['image_id']]['labels'].append(image['category_id'])
             else:
-                annotation_dict[image['image_id']] = [[image['bbox'], image['category_id']]]
+                annotation_dict[image['image_id']] = {'boxes': [], 'labels': []}
         return annotation_dict
+
+
+def annotations_to_tensor(annotation_dict):
+    for image_id in annotation_dict.keys():
+        annotation_dict[image_id]['boxes'] = th.tensor(annotation_dict[image_id]['boxes'])
+        annotation_dict[image_id]['labels'] = th.tensor(annotation_dict[image_id]['labels'])
+    return annotation_dict
