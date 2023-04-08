@@ -74,7 +74,7 @@ class GenISP(th.nn.Module):
             cc_matrix = self.conv_cc(image)
             image = th.matmul(image.permute(0, 2, 3, 1), cc_matrix).permute(0, 3, 1, 2)
             x = self.shallow_conv_net(image)
-            output.append(x)
+            output.append(x.squeeze(0))
         return output
 
 

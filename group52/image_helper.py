@@ -30,7 +30,7 @@ def load_image(path):
         conversion_matrix = raw.rgb_xyz_matrix
 
         # Or from packed or from averaged
-        xyz_image = packed_image @ conversion_matrix
+        # xyz_image = packed_image @ conversion_matrix
         # plt.imshow(xyz_image / 2**13)
         # plt.show()
 
