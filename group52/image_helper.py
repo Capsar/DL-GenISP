@@ -42,6 +42,12 @@ def load_image(path):
 
 
 def auto_post_process_image(path):
+    """
+    Post-processes the raw image using RawPy.
+    :param path: Image path.
+    :return: post-processed image.
+    """
+
     print('Loading image: {}'.format(path))
     with rawpy.imread(path) as raw:
         post_processed_image = raw.postprocess(half_size=True, fbdd_noise_reduction=FBDDNoiseReductionMode.Full)

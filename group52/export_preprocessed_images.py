@@ -2,7 +2,12 @@ import os
 from PIL import Image
 from image_helper import auto_post_process_image
 
+
 def main():
+    """
+    Method for post-processing the RAW images and saving them as PNG images.
+    :return:
+    """
     data_dir = '../data/our_sony/'
     raw_images_dir = data_dir + 'raw_images/'
     processed_images_dir = data_dir + 'processed_images/'

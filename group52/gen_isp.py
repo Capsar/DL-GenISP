@@ -96,9 +96,17 @@ def penalize_intensive_colors(enhanced_image):
 
 
 def load_annotations(file_path, previous_dictionary=None):
+    """
+    Load the annotations files of RAW-NOD dataset.
+
+    :param file_path:
+    :param previous_dictionary:
+    :return:
+    """
     with open(file_path, 'r') as f:
         data = json.load(f)
         annotation_dict = {}
+        # If a previous dictionary is given, we add the new annotations to it.
         if previous_dictionary is not None:
             annotation_dict = previous_dictionary
 
@@ -113,6 +121,11 @@ def load_annotations(file_path, previous_dictionary=None):
 
 
 def annotations_to_tensor(annotation_dict):
+    """
+    Convert the annotations to tensors.
+    :param annotation_dict:
+    :return:
+    """
     for image_id in annotation_dict.keys():
         annotation_dict[image_id]['boxes'] = th.tensor(annotation_dict[image_id]['boxes'])
         annotation_dict[image_id]['labels'] = th.tensor(annotation_dict[image_id]['labels'])
