@@ -272,7 +272,7 @@ They can be found in the [data/results](https://github.com/Capsar/2022_Q3---DL-G
 
 On the left we can see the logs of the training loop at epochs 31 and 32, the training started at a loss of `4.05` and ended at epoch 32 with a loss of `3.75`. This is a good indication that the model is learning the parameters in the GenISP model.
 
-On the right we can see a glimps of the outputted images of GenISP, the images are resized to, the in the paper mentioned `1333x800` pixels.
+On the right we can see a glimpse of the outputted images of GenISP, the images are resized to, the in the paper mentioned `1333x800` pixels. As we can see the colors are changing, indicating that the parameters in GenISP are updated.
 <p float="left">
   <img src="data/results/training_logs.jpeg" width="48%" /> 
   <img src="data/results/9 training_epochs.jpeg" width="48%" />
