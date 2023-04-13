@@ -28,8 +28,8 @@ used without any need for fine-tuning or re-training."
   <img src="data/results/paper_figure1.jpeg" width="32%" />
   <img src="data/results/paper_figure3.jpeg" width="66%" /> 
 </p>
-### Our approach
 
+### Our approach
 
 ### Methods
 
