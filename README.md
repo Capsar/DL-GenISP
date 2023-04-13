@@ -1,22 +1,22 @@
 ## Introduction
 
-Object detection is a fundamental task in computer vision with many practical applications. Although the object detection has been considered practically solved, it remains challenging in low-light conditions [@mpouziotas2022].
+Object detection is a fundamental task in computer vision with many practical applications. Although the object detection has been considered practically solved, it remains challenging in low-light conditions [[1](#mpouziotas2022)].
 To tacle these challenges, researchers have proposed fine-tuning detectors to use raw image data or using dedicated low-light neural pipelines trained on paired low- and normal-light data to restore and enhance images.
 
-One such approach was proposed by Igor Morawski, Yu-An Chen, Yu-Sheng Lin, Shusil Dangi, Kai He, and Winston H. Hsu in their paper, "GenISP: Generalizing Image Signal Processing for Low-Light Object Detection" [@morawski2022]. The authors proposed a minimal neural ISP pipeline called GenISP that incorporates color space transformation to a device-independent color space and a two-stage color processing approach using image-to-parameter modules. They also trained the pipeline under the guidance of a pre-trained object detector and optimized it for machine cognition, rather than making assumptions about perceptual quality. 
+One such approach was proposed by Igor Morawski, Yu-An Chen, Yu-Sheng Lin, Shusil Dangi, Kai He, and Winston H. Hsu in their paper, "GenISP: Generalizing Image Signal Processing for Low-Light Object Detection" [[2](#morawski2022)]. The authors proposed a minimal neural ISP pipeline called GenISP that incorporates color space transformation to a device-independent color space and a two-stage color processing approach using image-to-parameter modules. They also trained the pipeline under the guidance of a pre-trained object detector and optimized it for machine cognition, rather than making assumptions about perceptual quality. 
 
 In this report, we attempt to reproduce the training of GenISP network as explained by Morawski et al. and evaluate its effectiveness in improving object detection in low-light conditions. We follow their methodology and use a subset of their proposed dataset of 7K raw images. By reproducing this research, we aim to contribute to the ongoing efforts to improve object detection in low-light conditions and verify the results of Morawski et al.'s work. Additionally, we plan to discuss any limitations or drawbacks we encounter during our reproduction process, as well as suggest possible future improvements to the network architecture and training methodology.
 
 
 
 ## Data
-We used the dataset provided by authors of GenISP: Generalizing Image Signal Processing for Low-Light Object Detection [@morawski2022]. The dataset consists of 7K raw images collected using two cameras, Sony RX100 (3.2K images) and Nikon D750 (4.0K), and bounding box annotations of people, bicycles and cars. The images have been taken in different low-light conditions: ranging from pitch dark to less challenging conditions with artificial lighting. The authors have made the dataset publicly available. See [RAW-NOD (Night Object Detection) Dataset](https://github.com/igor-morawski/RAW-NOD), the data can be accessed by using [this link](https://docs.google.com/forms/d/1aIKTV6026daYFRtje7zcx4LeDz68AOcpWIH7XxNCICY/viewform?edit_requested=true).
+We used the dataset provided by authors of GenISP: Generalizing Image Signal Processing for Low-Light Object Detection [[2](#morawski2022)]. The dataset consists of 7K raw images collected using two cameras, Sony RX100 (3.2K images) and Nikon D750 (4.0K), and bounding box annotations of people, bicycles and cars. The images have been taken in different low-light conditions: ranging from pitch dark to less challenging conditions with artificial lighting. The authors have made the dataset publicly available. See [RAW-NOD (Night Object Detection) Dataset](https://github.com/igor-morawski/RAW-NOD), the data can be accessed by using [this link](https://docs.google.com/forms/d/1aIKTV6026daYFRtje7zcx4LeDz68AOcpWIH7XxNCICY/viewform?edit_requested=true).
 
 
 
 ### Data format
 The images are provided in Raw file format. 
-Raw image format is a type of file that contains unprocessed or minimally processed data from the image sensor of a digital camera. Unlike processed image formats like JPEG or PNG, which apply a fixed image signal processing (ISP) pipeline to the sensor data, raw files preserve the most information about the light intensity and color of the scene, at the best of the camera sensor’s performance. This allows for more flexibility and control in post-processing [@adobeRaw].
+Raw image format is a type of file that contains unprocessed or minimally processed data from the image sensor of a digital camera. Unlike processed image formats like JPEG or PNG, which apply a fixed image signal processing (ISP) pipeline to the sensor data, raw files preserve the most information about the light intensity and color of the scene, at the best of the camera sensor’s performance. This allows for more flexibility and control in post-processing [[3](#adobeRaw)].
 
 The authors chose to use RAW images because they argued that using raw image data would improve the robustness and accuracy of object detection in low-light conditions, compared to using processed image data from a traditional ISP pipeline. They also expected that using raw image data would avoid potential artifacts or distortions introduced by ISP processing.
 
@@ -286,12 +286,10 @@ On the right we can see a glimpse of the outputted images of GenISP, the images 
 
 ## References
 
-<a id=“mpouziotas2022”>[1]</a> D. Mpouziotas, E. Mastrapas, N. Dimokas, P. Karvelis and E. Glavas, "Object Detection for Low Light Images," 2022 7th South-East Europe Design Automation, Computer Engineering, Computer Networks and Social Media Conference (SEEDA-CECNSM), Ioannina, Greece, 2022, pp. 1-6, doi: 10.1109/SEEDA-CECNSM57760.2022.9932921.
+<a id="mpouziotas2022">[1]</a> D. Mpouziotas, E. Mastrapas, N. Dimokas, P. Karvelis and E. Glavas, "Object Detection for Low Light Images," 2022 7th South-East Europe Design Automation, Computer Engineering, Computer Networks and Social Media Conference (SEEDA-CECNSM), Ioannina, Greece, 2022, pp. 1-6, doi: 10.1109/SEEDA-CECNSM57760.2022.9932921.
 
 
-<a id=“morawski2022”>[2]</a> I. Morawski, Y. -A. Chen, Y. -S. Lin, S. Dangi, K. He and W. H. Hsu, "GenISP: Neural ISP for Low-Light Machine Cognition," 2022 IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshops (CVPRW), New Orleans, LA, USA, 2022, pp. 629-638, doi: 10.1109/CVPRW56347.2022.00078.
+<a id="morawski2022">[2]</a> I. Morawski, Y. -A. Chen, Y. -S. Lin, S. Dangi, K. He and W. H. Hsu, "GenISP: Neural ISP for Low-Light Machine Cognition," 2022 IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshops (CVPRW), New Orleans, LA, USA, 2022, pp. 629-638, doi: 10.1109/CVPRW56347.2022.00078.
 
-<a id=“adobeRaw”>[3]</a> Adobe. (n.d.). What is a RAW file and how do you open it? https://www.adobe.com/creativecloud/file-types/image/raw.html
+<a id="adobeRaw">[3]</a> Adobe. (n.d.). What is a RAW file and how do you open it? https://www.adobe.com/creativecloud/file-types/image/raw.html
 
-<a id=“hong2021”>[3]</a> Yang Hong, Kaixuan Wei, Linwei Chen, and Fu Ying. Craft-
-ing object detection in very low light. In BMVC, 2021
