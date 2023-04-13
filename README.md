@@ -189,7 +189,9 @@ The `load_annotations` & `annotations_to_tensor` function can be found in [gen_i
     gen_isp_images_dir = data_dir + 'gen_isp_images/' # Containing the .PNG files outputted by GenISP. (Intermediate results)
 ```
 #### Post-process the images using RawPy post-processing.
-This is the same code that is used in the [export_postpocessed_images.py](https://github.com/Capsar/2022_Q3---DL-GenISP/blob/main/group52/export_postprocessed_images.py)
+This is the same code that is used in the [export_postpocessed_images.py](https://github.com/Capsar/2022_Q3---DL-GenISP/blob/main/group52/export_postprocessed_images.py).
+The `auto_post_process_image` function can be found in [image_helper.py](https://github.com/Capsar/2022_Q3---DL-GenISP/blob/main/group52/image_helper.py).
+
 ```python
     if postprocess_images:
         images_paths = os.listdir(raw_images_dir)
@@ -242,7 +244,7 @@ This training loop continues for the specified number of epochs, iterating over 
                 # Pull the images trough the GenISP model and ObjectDetector.
                 gen_isp_outputs = gen_isp(batch_inputs)
 
-                # The Object Detector we used outputs the losses in training mode.
+                # The Object Detector we used outputs the losses in training mode. These are classification + regression loss.
                 object_detector_losses = object_detector(gen_isp_outputs, batch_targets)
 
                 # Only a training step is performed on the GenISP model.
