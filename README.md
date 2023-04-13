@@ -157,6 +157,9 @@ As for the loss functions, the paper defined loss as the sum of classification e
 
 The training process is implemented differently as mentioned in the paper because of hardware limitations.
 For us, It was only possible to load 2 downsized images in memory at a time. Thus, we had to train the model in batches of 2 images. The training process is implemented as follows:
+The hyperparameters that were used were: `batch_size=2`, `epochs=200`, `resize=(1333, 800)`, `random_seed=42`, `learing_rate=1e-2`. The resize is the same as in the paper. The learning rate in the paper does down after a couple of epochs, in our experiment it is fixed.
+
+The following code can be found back in [main.py](https://github.com/Capsar/2022_Q3---DL-GenISP/blob/main/group52/main.py).
 
 #### Load hyperparameters and initialize GenISP & Object Detector Model
 ```python
