@@ -95,7 +95,7 @@ After ConvWB and ConvCC, it is passed to a non-linear image enhancement by a sha
 
 At the end, the entire pipeline are implemented as below. 
 
-```
+```python
 class GenISP(th.nn.Module):
 
     def __init__(self):
@@ -151,13 +151,131 @@ Source: https://github.com/Capsar/2022_Q3---DL-GenISP/blob/main/group52/gen_isp.
 
 Regarding the reproducibility of this module, the explanation of ConvWB and ConvCC was confusing as the only place where it shows the flow of the pipeline was Figure 3 (the image above). An explanation of the flow should have taken place in the paragraph body and how these modules were integrated into the entire pipeline.   
 #### Training
-In order to train, we have used RetinaNet model available on (https://github.com/pytorch/vision/blob/main/torchvision/models/detection/retinanet.py). This models will be compared with the output of the current network and calculate losses.
+In order to train, we have used RetinaNet model available [Here](https://github.com/pytorch/vision/blob/main/torchvision/models/detection/retinanet.py). This models will be compared with the output of the current network and calculate losses.
 
 As for the loss functions, the paper defined loss as the sum of classification error and regression error. The classification error is implemented by alpha-balanced focal loss wheras the regression loss is by smooth-L1 loss. Both of the implemetations were already there within the RetinaNet model, thus we reused them to compute the losses. 
 
+The training process is implemented differently as mentioned in the paper because of hardware limitations.
+For us, It was only possible to load 2 downsized images in memory at a time. Thus, we had to train the model in batches of 2 images. The training process is implemented as follows:
+
+#### Load hyperparameters and initialize GenISP & Object Detector Model
+```python
+    h_parameters = get_hyper_parameters()
+
+    gen_isp = GenISP()
+
+    # Load the model https://github.com/pytorch/vision/blob/main/torchvision/models/detection/retinanet.py
+    object_detector = torchvision.models.detection.retinanet_resnet50_fpn_v2(weights=RetinaNet_ResNet50_FPN_V2_Weights.COCO_V1)
+    # We do not want to train the object detector so set requires_grad to false for all parameters.
+    for param in object_detector.parameters():
+        param.requires_grad = False
+    th.save(object_detector, '../data/retinanet_v2_object_detector.pickle')
+```
+#### Load the data and annotations and convert to a tensor for PyTorch usage.
+```python
+    data_dir = '../data/our_sony/'
+    # load_label
+    targets_per_image = load_annotations(data_dir + 'raw_new_train.json')
+    targets_per_image = load_annotations(data_dir + 'raw_new_test.json', targets_per_image)
+    targets_per_image = load_annotations(data_dir + 'raw_new_val.json', targets_per_image)
+    targets_per_image = annotations_to_tensor(targets_per_image)
+
+    raw_images_dir = data_dir + 'raw_images/' # Containing the .ARW files.
+    processed_images_dir = data_dir + 'processed_images/' # Containing the .PNG files outputted by RawPy.
+    gen_isp_images_dir = data_dir + 'gen_isp_images/' # Containing the .PNG files outputted by GenISP. (Intermediate results)
+```
+#### Post-process the images using RawPy post-processing.
+This is the same code that is used in the [export_postpocessed_images.py](https://github.com/Capsar/2022_Q3---DL-GenISP/blob/main/group52/export_postprocessed_images.py)
+```python
+    if postprocess_images:
+        images_paths = os.listdir(raw_images_dir)
+        for p in images_paths:
+            image_id = p.split('.')[0]
+            # image = (load_image(raw_images_dir + p)*255).astype(np.uint8) # This post-processing did not result in good images.
+            image = auto_post_process_image(raw_images_dir + p)
+            Image.fromarray(image).resize(h_parameters['resize']).save(processed_images_dir + image_id + '.png', format='png')
+            print(f'Saved image to: {processed_images_dir + image_id + ".png"}')
+```
+
+#### Main train loop, for each epoch we train the model on all images.
+This is the most beefy loop in our reproduction project so we will explain it in detail.
+
+In this deep learning training loop, the following steps are performed:
+1. The list of image paths is created by reading the contents of the ``processed_images_dir`` directory.
+2. The training loop iterates over the specified number of epochs.
+3. For each epoch, an empty list called ``epoch_loss`` is initialized to store the loss values for the current epoch. Two empty lists ``batch_inputs`` and ``batch_targets`` are also initialized to store the input images and target labels for each batch.
+4. The loop iterates over all images in the ``processed_images_dir`` directory, loading and converting each image to a tensor, and appending it to the ``batch_inputs`` list. The corresponding targets for each image are also appended to the ``batch_targets`` list.
+5. When the number of images in ``batch_inputs`` is equal to the specified batch size, the training loop proceeds to train the GenISP model and ObjectDetector. First, the images are passed through the GenISP model, and the generated outputs are fed into the ObjectDetector.
+6. The ObjectDetector computes the classification and bounding box regression losses during training.
+7. The GenISP model's optimizer's gradients are zeroed, and then the total loss is calculated by summing up the classification and bounding box regression losses.
+8. The total loss is backpropagated through the GenISP model, and the optimizer updates the model's parameters.
+9. The total loss for the current batch is appended to the ``epoch_loss`` list, and the ``batch_inputs`` and ``batch_targets`` lists are reset for the next batch.
+10. After processing all images in the current epoch, the mean and standard deviation of the ``epoch_loss`` list are calculated and printed.
+11. The loop then saves the GenISP outputs for each image after each epoch. For each image, it is loaded and converted to a tensor again, passed through the GenISP model, and the output is converted back to a NumPy array and saved as a PNG image in the ``gen_isp_images_dir`` directory.
+12. The loop prints the path where the image has been saved. 
+
+This training loop continues for the specified number of epochs, iterating over all images and updating the GenISP model's parameters using the ObjectDetector's losses.
+```python
+    images_paths = os.listdir(processed_images_dir) # 1
+    for epoch in range(h_parameters['epochs']): # 2
+        epoch_loss = [] # 3
+        batch_inputs, batch_targets = [], [] # 3
+        # Looping over all images in the processed image directory.
+        for i, p in enumerate(images_paths): # 4 
+            print('Training on image:', p)
+            image_id = p.split('.')[0]
+            targets = targets_per_image[image_id]
+            # Load the image and convert it to a tensor.
+            image_np_array = cv2.imread(os.path.join(processed_images_dir, p))
+            image_tensor = th.from_numpy(image_np_array).unsqueeze(0).permute(0, 3, 1, 2).div(255.0)
+
+            # Add the image and targets to the batch.
+            batch_inputs.append(image_tensor)
+            batch_targets.append(targets)
+
+            # If we have a full batch, train the model
+            if len(batch_inputs) % h_parameters['batch_size'] == 0:
+                # Pull the images trough the GenISP model and ObjectDetector.
+                gen_isp_outputs = gen_isp(batch_inputs)
+
+                # The Object Detector we used outputs the losses in training mode.
+                object_detector_losses = object_detector(gen_isp_outputs, batch_targets)
+
+                # Only a training step is performed on the GenISP model.
+                gen_isp.optimizer.zero_grad()
+
+                # Classification loss + Bounding box regression loss.
+                total_loss = object_detector_losses['classification'] + object_detector_losses['bbox_regression']
+                total_loss.backward()
+                gen_isp.optimizer.step()
+                epoch_loss.append(total_loss.item())
+                batch_inputs, batch_targets = [], [] # Reset the batch.
+
+        # Print the loss for the epoch after having looped over all images.
+        print(f'{epoch} | Epoch loss: {np.mean(epoch_loss)}+/-{np.std(epoch_loss)}')
+
+        # Save the gen_isp outputs after each epoch.
+        for p in images_paths:
+            image_id = f'{epoch}_{p.split(".")[0]}'
+            image_np_array = cv2.imread(os.path.join(processed_images_dir, p))
+            image_tensor = th.from_numpy(image_np_array).unsqueeze(0).permute(0, 3, 1, 2).div(255.0)
+            with th.no_grad():
+                gen_isp_outputs = gen_isp([image_tensor])
+            gen_isp_array = (gen_isp_outputs[0].permute(1, 2, 0).numpy() * 255).astype(np.uint8)
+            Image.fromarray(gen_isp_array).save(gen_isp_images_dir + image_id + '.png', format='png')
+            print(f'Saved image to: {gen_isp_images_dir + image_id + ".png"}')
+```
 
 ### Results
+By running the code in [main.py](https://github.com/Capsar/2022_Q3---DL-GenISP/blob/main/group52/main.py) the following results were obtained.
+They can be found in the [data/results](https://github.com/Capsar/2022_Q3---DL-GenISP/tree/main/data/results) folder.
 
+On the left we can see the logs of the training loop at epochs 31 and 32, the training started at a loss of `4.05` and ended at epoch 32 with a loss of `3.75`. This is a good indication that the model is learning the parameters in the GenISP model.
 
+On the right we can see a glimps of the outputted images of GenISP, the images are resized to, the in the paper mentioned `1333x800` pixels.
+<p float="left">
+  <img src="data/results/training_logs.jpeg" width="48%" /> 
+  <img src="data/results/9 training_epochs.jpeg" width="48%" />
+</p>
 
 ## Conclusions

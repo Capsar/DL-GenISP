@@ -35,7 +35,7 @@ def get_hyper_parameters():
     }
 
 
-def main(preprocess_images=False):
+def main(postprocess_images=False):
     h_parameters = get_hyper_parameters()
 
     gen_isp = GenISP()
@@ -59,7 +59,7 @@ def main(preprocess_images=False):
     gen_isp_images_dir = data_dir + 'gen_isp_images/' # Containing the .PNG files outputted by GenISP. (Intermediate results)
 
     # Post-process the images using RawPy post-processing.
-    if preprocess_images:
+    if postprocess_images:
         images_paths = os.listdir(raw_images_dir)
         for p in images_paths:
             image_id = p.split('.')[0]
