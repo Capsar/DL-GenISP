@@ -175,6 +175,7 @@ The following code can be found back in [main.py](https://github.com/Capsar/2022
     th.save(object_detector, '../data/retinanet_v2_object_detector.pickle')
 ```
 #### Load the data and annotations and convert to a tensor for PyTorch usage.
+The `load_annotations` & `annotations_to_tensor` function can be found in [gen_isp.py](https://github.com/Capsar/2022_Q3---DL-GenISP/blob/main/group52/gen_isp.py)
 ```python
     data_dir = '../data/our_sony/'
     # load_label
