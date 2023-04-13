@@ -24,7 +24,10 @@ n contrast with these methods, we propose a neural ISP that
 adapts raw image data into representation optimal for machine cognition so that a pre-trained object detector can be
 used without any need for fine-tuning or re-training."
 ## Reproduction
-![img.png](data/results/paper_figure_3.png)
+<p float="left">
+  <img src="data/results/paper_figure1.jpeg" width="32%" />
+  <img src="data/results/paper_figure3.jpeg" width="66%" /> 
+</p>
 ### Our approach
 
 
