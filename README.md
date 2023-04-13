@@ -5,12 +5,12 @@ To tacle these challenges, researchers have proposed fine-tuning detectors to us
 
 One such approach was proposed by Igor Morawski, Yu-An Chen, Yu-Sheng Lin, Shusil Dangi, Kai He, and Winston H. Hsu in their paper, "GenISP: Generalizing Image Signal Processing for Low-Light Object Detection" [[2](#morawski2022)]. The authors proposed a minimal neural ISP pipeline called GenISP that incorporates color space transformation to a device-independent color space and a two-stage color processing approach using image-to-parameter modules. They also trained the pipeline under the guidance of a pre-trained object detector and optimized it for machine cognition, rather than making assumptions about perceptual quality. 
 
-In this report, we attempt to reproduce the training of GenISP network as explained by Morawski et al. and evaluate its effectiveness in improving object detection in low-light conditions. We follow their methodology and use a subset of their proposed dataset of 7K raw images. By reproducing this research, we aim to contribute to the ongoing efforts to improve object detection in low-light conditions and verify the results of Morawski et al.'s work. Additionally, we plan to discuss any limitations or drawbacks we encounter during our reproduction process, as well as suggest possible future improvements to the network architecture and training methodology.
+In this report, we attempt to reproduce the training of GenISP network as explained by Morawski et al. and evaluate its effectiveness in improving object detection in low-light conditions. We follow their methodology and use a subset of their proposed dataset of 7K raw images. By reproducing this research, we aim to contribute to the ongoing efforts to improve object detection in low-light conditions and verify the reproducibility of Morawski et al.'s work. Additionally, we plan to discuss any limitations or drawbacks we encounter during our reproduction process, as well as suggest possible future improvements to the network architecture and training methodology.
 
 
 
 ## Data
-We used the dataset provided by authors of GenISP: Generalizing Image Signal Processing for Low-Light Object Detection [[2](#morawski2022)]. The dataset consists of 7K raw images collected using two cameras, Sony RX100 (3.2K images) and Nikon D750 (4.0K), and bounding box annotations of people, bicycles and cars. The images have been taken in different low-light conditions: ranging from pitch dark to less challenging conditions with artificial lighting. The authors have made the dataset publicly available. See [RAW-NOD (Night Object Detection) Dataset](https://github.com/igor-morawski/RAW-NOD), the data can be accessed by using [this link](https://docs.google.com/forms/d/1aIKTV6026daYFRtje7zcx4LeDz68AOcpWIH7XxNCICY/viewform?edit_requested=true).
+We used the dataset provided by authors of GenISP: Generalizing Image Signal Processing for Low-Light Object Detection [[2](#morawski2022)]. The dataset consists of 7K raw images collected using two cameras, Sony RX100 (3.2K images) and Nikon D750 (4.0K), and bounding box annotations of people, bicycles and cars. The images have been taken in different low-light conditions: ranging from pitch dark to less challenging conditions with artificial lighting. The authors have made the dataset publicly available. See [RAW-NOD (Night Object Detection) Dataset](https://github.com/igor-morawski/RAW-NOD), the data can be accessed using [this link](https://docs.google.com/forms/d/1aIKTV6026daYFRtje7zcx4LeDz68AOcpWIH7XxNCICY/viewform?edit_requested=true).
 
 
 
@@ -29,12 +29,8 @@ We encountered some challenges in downloading the dataset from Google Drive, as 
   <img src="data/results/paper_figure3.jpeg" width="66%" /> 
 </p>
 
-### Our approach
 
-
-### Methods
-
-#### Pre-processing
+### Pre-processing
 Preprocessing pipeline consists of two parts, namely packing and Color Space Transformation. 
 
 The implementation of packing is shown as follows.
@@ -150,7 +146,7 @@ class GenISP(th.nn.Module):
 Source: https://github.com/Capsar/2022_Q3---DL-GenISP/blob/main/group52/gen_isp.py
 
 Regarding the reproducibility of this module, the explanation of ConvWB and ConvCC was confusing as the only place where it shows the flow of the pipeline was Figure 3 (the image above). An explanation of the flow should have taken place in the paragraph body and how these modules were integrated into the entire pipeline.   
-#### Training
+### Training
 In order to train, we have used RetinaNet model available [Here](https://github.com/pytorch/vision/blob/main/torchvision/models/detection/retinanet.py). This models will be compared with the output of the current network and calculate losses.
 
 As for the loss functions, the paper defined loss as the sum of classification error and regression error. The classification error is implemented by alpha-balanced focal loss wheras the regression loss is by smooth-L1 loss. Both of the implemetations were already there within the RetinaNet model, thus we reused them to compute the losses. 
@@ -283,6 +279,17 @@ On the right we can see a glimpse of the outputted images of GenISP, the images 
   <img src="data/results/training_logs.jpeg" width="48%" /> 
   <img src="data/results/9 training_epochs.jpeg" width="48%" />
 </p>
+
+## Conclusions
+
+This project aimed to reproduce the GenISP neural ISP pipeline for low-light object detection, a novel method proposed by Morawski et al. Our team implemented all the necessary components of the pipeline, including image packing and the integration of ConvWB and ConvCC modules, which were not clearly explained in the original paper.
+
+Our experiments showed a consistent decrease in loss throughout the training process, indicating that the model was learning and the GenISP pipeline was effectively adapting to object recognition in dark. We reduced the training batch size due to hardware limitations, but we believe that this did not affect our results.
+
+Our reproduction confirms the feasibility of the GenISP pipeline, and provides a clear and detailed implementation that can be used by other researchers interested in this topic.
+With our results we cannot verify that the GenISP method is better than other low-light image
+restoration techniques nor that it can generalize
+to unseen sensors and object detectors. However, we expect that running our code on better hardware would fully reproduce the results of the original paper.
 
 ## References
 
