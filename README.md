@@ -9,33 +9,20 @@ In this report, we attempt to reproduce the training of GenISP network as explai
 
 
 
-#### Based on:
-- https://github.com/igor-morawski/RAW-NOD
-
-#### Dataset
-- https://drive.google.com/drive/folders/1VjRAitFIigKWExrOkVzT397J0QAVt7wu
-### Data
-The authors of t
-The dataset consists of 7K raw images collected
-using two cameras, Sony RX100 (3.2K images) and
-Nikon D750 (4.0K), and bounding box annotations of
-people, bicycles and cars. The images have been taken in different low-light conditions: ranging from pitch dark to less challenging conditions with artificial lighting.
-Authors have made the dataset publicly available to allow benchmarking of future methods targeting object detection in low-light conditions.
-
-#### What is raw image format?
-A raw image format refers to the unprocessed image data 
-captured by a digital camera's sensor.
+## Data
+We used the dataset provided by authors of GenISP: Generalizing Image Signal Processing for Low-Light Object Detection [@morawski2022]. The dataset consists of 7K raw images collected using two cameras, Sony RX100 (3.2K images) and Nikon D750 (4.0K), and bounding box annotations of people, bicycles and cars. The images have been taken in different low-light conditions: ranging from pitch dark to less challenging conditions with artificial lighting. The authors have made the dataset publicly available. See [RAW-NOD (Night Object Detection) Dataset](https://github.com/igor-morawski/RAW-NOD), the data can be accessed by using [this link](https://docs.google.com/forms/d/1aIKTV6026daYFRtje7zcx4LeDz68AOcpWIH7XxNCICY/viewform?edit_requested=true).
 
 
-#### Why use raw image format?
-TODO explain this:
-"As showed by Hong et al. [7], detectors us-
-ing raw sensor data perform significantly better than de-
-tectors using sRGB data processed by a traditional ISP
-pipeline."
-n contrast with these methods, we propose a neural ISP that
-adapts raw image data into representation optimal for machine cognition so that a pre-trained object detector can be
-used without any need for fine-tuning or re-training."
+
+### Data format
+The images are provided in Raw file format. 
+Raw image format is a type of file that contains unprocessed or minimally processed data from the image sensor of a digital camera. Unlike processed image formats like JPEG or PNG, which apply a fixed image signal processing (ISP) pipeline to the sensor data, raw files preserve the most information about the light intensity and color of the scene, at the best of the camera sensor’s performance. This allows for more flexibility and control in post-processing [@adobeRaw].
+
+The authors chose to use RAW images because they argued that using raw image data would improve the robustness and accuracy of object detection in low-light conditions, compared to using processed image data from a traditional ISP pipeline. They also expected that using raw image data would avoid potential artifacts or distortions introduced by ISP processing.
+
+### Our experience
+We encountered some challenges in downloading the dataset from Google Drive, as it was a large zip archive (>70 GB) containing thousands of photos. When downloading the file using web browsers, the download always failed after around an hour. The authors did not provide any alternative way to access the dataset or any instructions on how to download it successfully. We had to find a workaround by installing the Google Drive application for Windows and saving the file as a shortcut in our personal Google Drive folders. This allowed us to open the zip archive without fully downloading it. We appreciate that the authors made the dataset publicly available, but we would suggest that they make it more accessible by splitting it into smaller files or hosting it on a different platform that supports large file transfers.
+
 ## Reproduction
 <p float="left">
   <img src="data/results/paper_figure1.jpeg" width="32%" />
@@ -303,3 +290,8 @@ On the right we can see a glimpse of the outputted images of GenISP, the images 
 
 
 <a id=“morawski2022”>[2]</a> I. Morawski, Y. -A. Chen, Y. -S. Lin, S. Dangi, K. He and W. H. Hsu, "GenISP: Neural ISP for Low-Light Machine Cognition," 2022 IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshops (CVPRW), New Orleans, LA, USA, 2022, pp. 629-638, doi: 10.1109/CVPRW56347.2022.00078.
+
+<a id=“adobeRaw”>[3]</a> Adobe. (n.d.). What is a RAW file and how do you open it? https://www.adobe.com/creativecloud/file-types/image/raw.html
+
+<a id=“hong2021”>[3]</a> Yang Hong, Kaixuan Wei, Linwei Chen, and Fu Ying. Craft-
+ing object detection in very low light. In BMVC, 2021
