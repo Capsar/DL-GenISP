@@ -24,7 +24,7 @@ n contrast with these methods, we propose a neural ISP that
 adapts raw image data into representation optimal for machine cognition so that a pre-trained object detector can be
 used without any need for fine-tuning or re-training."
 ## Reproduction
-![img.png](report_resources/screenshot_pipeline.png)
+![img.png](data/results/paper_figure_3.png)
 ### Our approach
 
 
@@ -52,6 +52,40 @@ Although we implemented this part in the beginning, the reproduction was not an 
 The main body of Gen ISP consists of mainly three components, ConvWB, ConvCC and Shallow ConvNet, as shown in the image above.
 
 ConvWB is implemented to adjust global illumination levels and white balance of the image, while ConvCC is to map the colour space so that is optimal for a shallow ConvNet at the end of the entire pipeline. The image is resized and passed to Image-to-Parameter modules, while are three convolutions of tensors with different sizes with Leaky Rectified Linear Unit and Max pooling in between and followed by adaptive averaging pooling and MLP at the end. 
+
+##### ConvWB
+$$
+\left[\begin{array}{l}
+R^{\prime} \\
+G^{\prime} \\
+B^{\prime}
+\end{array}\right]=\left[\begin{array}{ccc}
+w_{11} & 0 & 0 \\
+0 & w_{22} & 0 \\
+0 & 0 & w_{33}
+\end{array}\right]\left[\begin{array}{l}
+R \\
+G \\
+B
+\end{array}\right] .
+$$
+
+##### ConvCC
+$$
+\left[\begin{array}{l}
+R^{\prime} \\
+G^{\prime} \\
+B^{\prime}
+\end{array}\right]=\left[\begin{array}{lll}
+c_{11} & c_{12} & c_{13} \\
+c_{21} & c_{22} & c_{23} \\
+c_{31} & c_{32} & c_{33}
+\end{array}\right]\left[\begin{array}{l}
+R \\
+G \\
+B
+\end{array}\right] .
+$$
 
 After ConvWB and ConvCC, it is passed to a non-linear image enhancement by a shallow ConvNet, which are also a sequence of two convolutions, where there are Instance normalizations and a Leaky Rectified Linear Unit in between.
 
@@ -109,6 +143,7 @@ class GenISP(th.nn.Module):
             output.append(x.squeeze(0))
         return output
 ```
+Source: https://github.com/Capsar/2022_Q3---DL-GenISP/blob/main/group52/gen_isp.py
 
 Regarding the reproducibility of this module, the explanation of ConvWB and ConvCC was confusing as the only place where it shows the flow of the pipeline was Figure 3 (the image above). An explanation of the flow should have taken place in the paragraph body and how these modules were integrated into the entire pipeline.   
 #### Training
