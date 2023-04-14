@@ -66,38 +66,14 @@ The main body of Gen ISP consists of mainly three components, ConvWB, ConvCC and
 ConvWB is implemented to adjust global illumination levels and white balance of the image, while ConvCC is to map the colour space so that is optimal for a shallow ConvNet at the end of the entire pipeline. The image is resized and passed to Image-to-Parameter modules, while are three convolutions of tensors with different sizes with Leaky Rectified Linear Unit and Max pooling in between and followed by adaptive averaging pooling and MLP at the end. 
 
 ##### ConvWB
-$$
-\left[\begin{array}{l}
-R^{\prime} \\
-G^{\prime} \\
-B^{\prime}
-\end{array}\right]=\left[\begin{array}{ccc}
-w_{11} & 0 & 0 \\
-0 & w_{22} & 0 \\
-0 & 0 & w_{33}
-\end{array}\right]\left[\begin{array}{l}
-R \\
-G \\
-B
-\end{array}\right] .
-$$
+<p float="center">
+  <img src="data/results/ConvWB.jpg" width="25%" />
+</p>
 
 ##### ConvCC
-$$
-\left[\begin{array}{l}
-R^{\prime} \\
-G^{\prime} \\
-B^{\prime}
-\end{array}\right]=\left[\begin{array}{lll}
-c_{11} & c_{12} & c_{13} \\
-c_{21} & c_{22} & c_{23} \\
-c_{31} & c_{32} & c_{33}
-\end{array}\right]\left[\begin{array}{l}
-R \\
-G \\
-B
-\end{array}\right] .
-$$
+<p float="center">
+  <img src="data/results/ConvCC.jpg" width="25%" /> 
+</p>
 
 After ConvWB and ConvCC, it is passed to a non-linear image enhancement by a shallow ConvNet, which are also a sequence of two convolutions, where there are Instance normalizations and a Leaky Rectified Linear Unit in between.
 
@@ -312,3 +288,11 @@ to unseen sensors and object detectors. However, we expect that running our code
 
 <a id="adobeRaw">[3]</a> Adobe. (n.d.). What is a RAW file and how do you open it? https://www.adobe.com/creativecloud/file-types/image/raw.html
 
+## Who did what
+| Who           | What                                                                                                                                                                                                                                                      |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Caspar Meijer | Implemented GenISP Pytorch Model in gen_isp.py, Setup main.py with training loop, created visualize_single_image.py & export_post_processed_image.py, image_helper.py, retinanet_helper.py. In Blog: Training, Pre-processing finishing touches, Results. |
+| Taichi Uno    | Helped with main.py, setup loss function first try, worked in image_helper.py on load image packing & averaging pixels, loading images, worked on comments & in blog: data, pre-processing, GENISP                                                        |
+| Davis Sterns  | Extracted Hyperparameters from paper, setup outline for loss functions, In Blog: conclusions, references, introduction, added bits to data                                                                                                                |              |                                                                                                                                                                                                                                                           |
+
+In depth contributions can be found in github commits. (During lab we worked together in 1 commit.)
