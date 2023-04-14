@@ -1,3 +1,6 @@
+# Reproduction of GenISP: Generalizing Image Signal Processing for Low-Light Object Detection
+## Reproduced by: Caspar Meijer, Taichi Uno & Davis Sterns
+
 ## Introduction
 
 Object detection is a fundamental task in computer vision with many practical applications. Although the object detection has been considered practically solved, it remains challenging in low-light conditions [[1](#mpouziotas2022)].
