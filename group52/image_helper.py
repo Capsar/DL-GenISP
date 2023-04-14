@@ -13,7 +13,8 @@ def load_image(path):
     print('Loading image: {}'.format(path))
     with rawpy.imread(path) as raw:
         # pack
-        raw_image = raw.raw_image.astype(np.int32)
+        raw_image = raw.raw_image.astype(np.double)
+
         packed_image = np.zeros((int(raw_image.shape[0] / 2), int(raw_image.shape[1] / 2), 4), dtype=np.int32)
         packed_image[:, :, 0] = raw_image[0::2, 0::2]  # R Left top
         packed_image[:, :, 1] = raw_image[0::2, 1::2]  # G Right top
@@ -23,20 +24,13 @@ def load_image(path):
         # averaged green channel
         averaged_image = np.zeros((packed_image.shape[0], packed_image.shape[1], 3), dtype=np.int32)
         averaged_image[:, :, 0] = packed_image[:, :, 0]  # R
-        averaged_image[:, :, 1] = (packed_image[:, :, 1] + packed_image[:, :, 2])  # G
+        averaged_image[:, :, 1] = (packed_image[:, :, 1] + packed_image[:, :, 2]) / 2  # G
         averaged_image[:, :, 2] = packed_image[:, :, 3]  # B
 
         # convert color channel
-        conversion_matrix = raw.rgb_xyz_matrix
+        conversion_matrix = raw.rgb_xyz_matrix[0:3, :]
 
-        # Or from packed or from averaged
-        # xyz_image = packed_image @ conversion_matrix
-        # plt.imshow(xyz_image / 2**13)
-        # plt.show()
-
-        xyz_image = averaged_image @ conversion_matrix[0:3, 0:3]
-        # plt.imshow(xyz_image / 2**13)
-        # plt.show()
+        xyz_image = averaged_image @ conversion_matrix.T
 
         return xyz_image
 
