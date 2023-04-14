@@ -34,7 +34,7 @@ We encountered some challenges in downloading the dataset from Google Drive, as 
 Preprocessing pipeline consists of two parts, namely packing and Color Space Transformation. 
 
 The implementation of packing is shown as follows.
-```
+```python
 raw_image = raw.raw_image.astype(np.int32)
 packed_image = np.zeros((int(raw_image.shape[0] / 2), int(raw_image.shape[1] / 2), 4), dtype=np.int32)
 packed_image[:, :, 0] = raw_image[0::2, 0::2]  # R Left top
@@ -45,7 +45,7 @@ packed_image[:, :, 3] = raw_image[1::2, 1::2]  # B Right bottom
 The packing is carried out in the way that a pixel of the packed image is a vector of four elements which are the four square neighbouring pixels of the original raw image. After packing, the two green channels are averaged and returned as an RGB image.
 
 After that the paper mentions the averaging of the green channels, this is done as followed:
-```
+```python
 averaged_image = np.zeros((packed_image.shape[0], packed_image.shape[1], 3), dtype=np.int32)
 averaged_image[:, :, 0] = packed_image[:, :, 0]  # R
 averaged_image[:, :, 1] = (packed_image[:, :, 1] + packed_image[:, :, 2]) / 2  # G
