@@ -69,12 +69,13 @@ ConvWB is implemented to adjust global illumination levels and white balance of 
 <p float="left">
   <img src="data/results/ConvWB.jpg" width="25%" />
 </p>
-
+The ConvWB is applied first to the resized images.
 
 ##### ConvCC
 <p float="left">
   <img src="data/results/ConvCC.jpg" width="25%" /> 
 </p>
+The ConvCC is applied secondly to the resized images.
 
 After ConvWB and ConvCC, it is passed to a non-linear image enhancement by a shallow ConvNet, which are also a sequence of two convolutions, where there are Instance normalizations and a Leaky Rectified Linear Unit in between.
 
