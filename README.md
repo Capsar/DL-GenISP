@@ -66,12 +66,13 @@ The main body of Gen ISP consists of mainly three components, ConvWB, ConvCC and
 ConvWB is implemented to adjust global illumination levels and white balance of the image, while ConvCC is to map the colour space so that is optimal for a shallow ConvNet at the end of the entire pipeline. The image is resized and passed to Image-to-Parameter modules, while are three convolutions of tensors with different sizes with Leaky Rectified Linear Unit and Max pooling in between and followed by adaptive averaging pooling and MLP at the end. 
 
 ##### ConvWB
-<p float="center">
+<p float="left">
   <img src="data/results/ConvWB.jpg" width="25%" />
 </p>
 
+
 ##### ConvCC
-<p float="center">
+<p float="left">
   <img src="data/results/ConvCC.jpg" width="25%" /> 
 </p>
 
