@@ -44,9 +44,18 @@ packed_image[:, :, 3] = raw_image[1::2, 1::2]  # B Right bottom
 ```
 The packing is carried out in the way that a pixel of the packed image is a vector of four elements which are the four square neighbouring pixels of the original raw image. After packing, the two green channels are averaged and returned as an RGB image.
 
-Colour Space Transformation is to convert images' colour space into device independent using the matrix specific to the device. The matrix can be found as one of the fields of a raw object after loading an image. By doing this, the model achieves a higher level of generalizability.
+After that the paper mentions the averaging of the green channels, this is done as followed:
+```
+averaged_image = np.zeros((packed_image.shape[0], packed_image.shape[1], 3), dtype=np.int32)
+averaged_image[:, :, 0] = packed_image[:, :, 0]  # R
+averaged_image[:, :, 1] = (packed_image[:, :, 1] + packed_image[:, :, 2]) / 2  # G
+averaged_image[:, :, 2] = packed_image[:, :, 3]  # B
+```
 
-Although we implemented this part in the beginning, the reproduction was not an easy task due to its poor explanation, especially image packing, which took us some time to figure out how it works. Additionally, due to its low performance, we decided to use the RawPy build in the function of "rawpy.postprocess" instead of this preprocessing pipeline. 
+Colour Space Transformation is to convert images' colour space into device independent using the matrix specific to the device. The matrix can be found as one of the fields of a raw object after loading an image. By doing this, the model achieves a higher level of generalizability. The color-space-transformation matrix is present in the raw image file `raw.rgb_xyz_matrix[0:3, :]`
+
+The color-space-transformation can then be multiplied with the average image like so `xyz_image = averaged_image @ conversion_matrix.T` with as a result the image in XYZ color space.
+Although we implemented this part in the beginning, the reproduction was not an easy task due to its poor explanation, especially image packing, which took us some time to figure out how it works. Furthermore, the output values of the image were not between 0 and 1, this it was very difficult to display these images. Therefore we decided to use the RawPy build in the function of "rawpy.postprocess" instead of this preprocessing pipeline, which also results in a device independent color-space (PNG). 
 
 #### GEN-ISP
 The main body of Gen ISP consists of mainly three components, ConvWB, ConvCC and Shallow ConvNet, as shown in the image above.
