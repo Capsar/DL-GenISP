@@ -67,7 +67,7 @@ ConvWB is implemented to adjust global illumination levels and white balance of 
 
 ##### ConvWB
 <p float="left">
-  <img src="data/results/ConvWB.jpg" width="25%" /> 
+  <img src="data/results/convWB.jpg" width="25%" /> 
 </p>
 The ConvWB is applied first to the resized images.
 
