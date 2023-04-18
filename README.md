@@ -1,6 +1,29 @@
 # Reproduction of GenISP: Generalizing Image Signal Processing for Low-Light Object Detection
 ## Reproduced by: Caspar Meijer, Taichi Uno & Davis Sterns
 The implementation is from scratch, without a prior codebase to base the logic on. Everything is interpreted from the paper.
+
+## Table of Content
+<!-- TOC -->
+* [Introduction](#introduction)
+* [Data](#data)
+  * [Data format](#data-format)
+  * [Our experience](#our-experience)
+* [Reproduction](#reproduction)
+  * [Pre-processing](#pre-processing)
+    * [GEN-ISP](#gen-isp)
+      * [ConvWB](#convwb)
+      * [ConvCC](#convcc)
+  * [Training](#training)
+    * [Load hyperparameters and initialize GenISP & Object Detector Model](#load-hyperparameters-and-initialize-genisp--object-detector-model)
+    * [Load the data and annotations and convert to a tensor for PyTorch usage.](#load-the-data-and-annotations-and-convert-to-a-tensor-for-pytorch-usage)
+    * [Post-process the images using RawPy post-processing.](#post-process-the-images-using-rawpy-post-processing)
+    * [Main train loop, for each epoch we train the model on all images.](#main-train-loop-for-each-epoch-we-train-the-model-on-all-images)
+  * [Results](#results)
+* [Conclusions](#conclusions)
+* [References](#references)
+* [Who did what](#who-did-what)
+<!-- TOC -->
+
 ## Introduction
 
 Object detection is a fundamental task in computer vision with many practical applications. Although the object detection has been considered practically solved, it remains challenging in low-light conditions [[1](#mpouziotas2022)].
